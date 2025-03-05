@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="INFO">
+    <Properties>
+        <Property name="logDir">logs</Property>
+    </Properties>
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} [%t] %-5level %logger{36} - %msg%n"/>
+        </Console>  
+        <RollingFile name="RollingFileLogger" 
+                     createOnDemand="true"
+                     fileName="${sys:logDir}/c2cri-mvt.log"
+                     filePattern="${sys:logDir}/c2cri-mvt-%d{yyyy-MM-dd-HH}.log.gz">
+            <PatternLayout>
+                <Pattern>%d{yyyy-MM-dd HH:mm:ss} [%t] %-5level %logger{36} - %msg%n</Pattern>
+            </PatternLayout>
+            <Policies>
+                <!-- Roll file every hour -->
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <!-- Keep last 10 log files -->
+                <SizeBasedTriggeringPolicy size="10MB"/>
+            </Policies>
+        </RollingFile>
+    </Appenders>
+    <Loggers>
+        <Root level="info">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="RollingFileLogger"/>
+        </Root>
+        <Logger name="usdot.fhwa.stol.c2cri.c2cri_mvt" level="debug" additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="RollingFileLogger"/>
+        </Logger>
+    </Loggers>
+</Configuration>
