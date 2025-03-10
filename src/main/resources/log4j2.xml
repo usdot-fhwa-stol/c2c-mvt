@@ -9,8 +9,8 @@
         </Console>  
         <RollingFile name="RollingFileLogger" 
                      createOnDemand="true"
-                     fileName="${sys:logDir}/c2cri-mvt.log"
-                     filePattern="${sys:logDir}/c2cri-mvt-%d{yyyy-MM-dd-HH}.log.gz">
+                     fileName="${sys:logDir}/c2c-mvt.log"
+                     filePattern="${sys:logDir}/c2c-mvt-%d{yyyy-MM-dd-HH}.log.gz">
             <PatternLayout>
                 <Pattern>%d{yyyy-MM-dd HH:mm:ss} [%t] %-5level %logger{36} - %msg%n</Pattern>
             </PatternLayout>
@@ -27,7 +27,7 @@
             <AppenderRef ref="Console"/>
             <AppenderRef ref="RollingFileLogger"/>
         </Root>
-        <Logger name="usdot.fhwa.stol.c2cri.c2cri_mvt" level="debug" additivity="false">
+        <Logger name="usdot.fhwa.stol.c2c.c2c_mvt" level="debug" additivity="false">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="RollingFileLogger"/>
         </Logger>

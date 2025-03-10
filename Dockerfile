@@ -3,4 +3,4 @@ WORKDIR /app
 COPY src /app/src
 COPY pom.xml /app
 RUN mvn clean package -DskipTests
-CMD ["java", "-jar", "target/c2cri-mvt.jar"]
+CMD ["java", "-jar", "target/c2c-mvt.jar"]

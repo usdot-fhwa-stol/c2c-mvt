@@ -1,4 +1,4 @@
-package usdot.fhwa.stol.c2cri.c2cri_mvt.controllers;
+package usdot.fhwa.stol.c2c.c2c_mvt.controllers;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -13,6 +13,6 @@ public class WelcomeController {
     @GetMapping("/welcome")
     public String welcome() {
         logger.debug("Welcome controller initialized and returned message: Welcome to the C2C RI!");
-        return "Welcome to the C2C RI!";
+        return "Welcome to the C2C Message Validator!";
     }
 }

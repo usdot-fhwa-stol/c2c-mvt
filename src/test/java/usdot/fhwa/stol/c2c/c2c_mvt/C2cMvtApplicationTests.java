@@ -1,10 +1,10 @@
-package usdot.fhwa.stol.c2cri.c2cri_mvt;
+package usdot.fhwa.stol.c2c.c2c_mvt;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class C2criMvtApplicationTests {
+class c2cMvtApplicationTests {
 
 	@Test
 	void contextLoads() {
