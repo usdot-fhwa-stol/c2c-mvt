@@ -8,11 +8,11 @@
 		<version>3.4.3</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>usdot.fhwa.stol.c2cri</groupId>
-	<artifactId>c2cri-mvt</artifactId>
+	<groupId>usdot.fhwa.stol.c2c</groupId>
+	<artifactId>c2c-mvt</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
-	<name>c2cri-mvt</name>
+	<name>c2c-mvt</name>
 	<description>The Center-To-Center Message Validation Tool described is to provide a consistent way of validating messages that are described by C2C standards, with an initial focus on the ngTMDD.</description>
 	<url/>
 	<licenses>
@@ -58,7 +58,7 @@
 	</dependencies>
 
 	<build>
-		<finalName>c2cri-mvt</finalName>
+		<finalName>c2c-mvt</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>

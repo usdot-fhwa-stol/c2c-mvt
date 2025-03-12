@@ -1,10 +1,12 @@
-package usdot.fhwa.stol.c2cri.c2cri_mvt.controllers;
+package usdot.fhwa.stol.c2c.c2c_mvt.controllers;
 
 import static org.mockito.Mockito.when;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+
+import usdot.fhwa.stol.c2c.c2c_mvt.controllers.WelcomeController;
 
 
 public class WelcomeTestsTest {
