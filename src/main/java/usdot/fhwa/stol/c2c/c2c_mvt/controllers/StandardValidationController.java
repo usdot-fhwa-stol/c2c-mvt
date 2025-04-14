@@ -238,12 +238,24 @@ public class StandardValidationController
 	}
 	
 	
-	@GetMapping("/resetlog")
+	@GetMapping("/resetLog")
 	public String resetLog()
 	{
+		LOGGER.debug("resetLog() invoked");
 		synchronized (LOGS)
 		{
 			LOGS.clear();
+		}
+		try (DirectoryStream<Path> oDir = Files.newDirectoryStream(Path.of(m_sWorkingDir, FILEDIR)))
+		{
+			for (Path oFile : oDir)
+			{
+				Files.deleteIfExists(oFile);
+			}
+		}
+		catch (IOException oEx)
+		{
+			Util.LogException(LOGGER, oEx);
 		}
 		return "{\"msg\": \"Success\"}";
 	}
@@ -252,6 +264,7 @@ public class StandardValidationController
 	@GetMapping("/downloadLog")
 	public ResponseEntity<Resource> downloadLog()
 	{
+		LOGGER.debug("downloadLog() invoked");
 		byte[] yNewline = "\n".getBytes(StandardCharsets.UTF_8);
 		try (ByteArrayOutputStream oOut = new ByteArrayOutputStream())
 		{
