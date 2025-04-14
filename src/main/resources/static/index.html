@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validate C2C Messages</title>
+	<link rel="stylesheet" href="style/mvt.css"/>
+	<link rel="stylesheet" href="style/font-awesome.min.css"/>
+	<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+	<script type="module" src="script/StandardValidation.js"></script>
+</head>
+<body>
+    <div class="header">
+        <h1>Validate C2C Messages</h1>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <h2 class="card-title">Configure Message</h2>
+			<div class="select-container">
+				<div>
+					<label>C2C Standard </label><select id="select_standard"></select>
+				</div>
+
+				<div>
+					<label>Version </label><select id="select_version"></select>
+				</div>
+
+				<div>
+					<label>Encoding </label><select id="select_encoding"></select>
+				</div>
+
+				<div>
+					<label>Message Type </label><select id="select_messagetype"></select>
+				</div>
+			</div>
+            <textarea class="textarea file_textarea" placeholder="Paste message, drop file, or choose file to validate"></textarea>
+			<div class="textarea file_uploading"><div class="centered-element"><progress id="progressBar" max="100" value="0"></progress></div></div>
+			<div class="textarea file_success"></div>
+			<div class="textarea validating">Validation in progress...</div>
+            <div class="button-container">
+                <button id="btnChooseFile" disabled><i class="fa fa-upload"></i> Choose File</button>
+				<input type="file" id="file_to_upload">
+                <button id="btnValidate" disabled><i class="fa fa-check"></i> Validate</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="card-title">Validation Results</h2>
+            <textarea class="textarea msgcontainer" placeholder="Validation results will appear here..." readonly></textarea>
+            <div class="button-container">
+                <button disabled id="btnDownloadLog"><i class="fa fa-download"></i> Download Log</button>
+                <button disabled id="btnResetLog"><i class="fa fa-refresh"></i> Reset Log</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
