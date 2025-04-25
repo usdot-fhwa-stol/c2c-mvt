@@ -65,8 +65,9 @@ body
 }
 
 .file_uploading,
-.file_success,
-.validating
+.validating,
+.cannotdrop_file,
+.drop_file
 {
 	display:none;
 }
@@ -125,6 +126,11 @@ input[type="file"]
 	outline: 2px dashed #92b0b3;
 }
 
+.cannotdrop_file
+{
+	background-color: #ff8888
+}
+
 .centered-element
 {
 	position: relative;
@@ -135,6 +141,13 @@ input[type="file"]
 	-webkit-transform: translateX(-50%) translateY(-50%);
 	transform: translateX(-50%) translateY(-50%);
 	text-align: center;
+}
+
+.centeredlargefont
+{
+	justify-content: center;
+	align-items: center;
+	font-size: x-large;
 }
 
 button:disabled,

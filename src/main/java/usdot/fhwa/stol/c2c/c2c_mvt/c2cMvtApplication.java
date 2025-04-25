@@ -5,11 +5,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 
 @SpringBootApplication
-public class c2cMvtApplication 
+public class C2CMVTApplication 
 {
-	
 	public static void main(String[] args) 
 	{
-		SpringApplication.run(c2cMvtApplication.class, args);
+		SpringApplication.run(C2CMVTApplication.class, args);
 	}
 }

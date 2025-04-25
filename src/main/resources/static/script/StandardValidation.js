@@ -4,7 +4,8 @@ let oLoadedMessageTypes = {};
 let sPrevText = '';
 let oFileToUpload = null;
 let nPollInterval = 1000;
-
+let bValidating = false;
+let sC2CMvtNull = 'c2cmvtnull';
 
 function init()
 {
@@ -15,7 +16,7 @@ function init()
 		'dataType': 'JSON'
 	}).done(function (oData) // oData is a JSON Array of strings representing the available standards
 	{
-		let sOptions = '<option value="0"></option>';
+		let sOptions = `<option value="${sC2CMvtNull}"></option>`;
 		for (let sStandard of oData.values())
 		{
 			sOptions += `<option value="${sStandard}">${sStandard}</option>`;
@@ -39,28 +40,41 @@ function init()
 		uploadFile();
 	});
 	
-	$('.file_textarea').on( 'drag dragstart dragend dragover dragenter dragleave drop', function(oEvt)
+	$('.file_textarea,.cannotdrop_file,.drop_file,.cannoutdrop_file').on( 'drag dragstart dragend dragover dragenter dragleave drop', function(oEvt)
 	{
 		// preventing the unwanted behaviours
 		oEvt.preventDefault();
 		oEvt.stopPropagation();
 	}).on('dragenter', function()
 	{
-		sPrevText = $(this).val();
-		$(this).val('');
+		$('.file_textarea').hide();
+		if (optionsNotSet())
+			$('.cannotdrop_file').css('display', 'flex');
+		else
+			$('.drop_file').css('display', 'flex');
 	}).on('dragover dragenter', function()
 	{
-		$(this).addClass('isDragging');
+		$('.file_textarea,.cannotdrop_file,.drop_file,.cannoutdrop_file').addClass('isDragging');
 	}).on('dragleave dragend drop', function()
 	{
-		$(this).removeClass('isDragging');
+		$('.file_textarea,.cannotdrop_file,.drop_file,.cannoutdrop_file').removeClass('isDragging');
 	}).on('dragleave', function()
 	{
-		$(this).val(sPrevText);
-		sPrevText = '';
 		oFileToUpload = null;
+		$('.file_textarea').show();
+		$('.cannotdrop_file').css('display', 'none');
+		$('.drop_file').css('display', 'none');
 	}).on('drop', function (oEvt)
 	{
+		if (optionsNotSet())
+		{
+			setTimeout(() => 
+			{
+				$('.cannotdrop_file').css('display', 'none');
+				$('.file_textarea').show();
+			}, 1500);
+			return;
+		}
 		oFileToUpload = oEvt.originalEvent.dataTransfer.files[0];
 		uploadFile();
 	});
@@ -68,6 +82,8 @@ function init()
 	$('#btnValidate').on('click', uploadFile);
 	$('#btnResetLog').on('click', resetLog);
 	$('#btnDownloadLog').on('click', downloadLog);
+	$('select').on('change', setButtonDisabled);
+	$('.file_textarea').on('keyup', setButtonDisabled);
 }
 
 
@@ -85,7 +101,12 @@ function uploadFile()
 	{
 		oFormData.append('uploaded_file', oFileToUpload);
 	}
-	$('button').prop('disabled', true);
+	oFormData.append('standard', $('#select_standard').find(':selected').val());
+	oFormData.append('version', $('#select_version').find(':selected').val());
+	oFormData.append('encoding', $('#select_encoding').find(':selected').val());
+	oFormData.append('message_type', $('#select_messagetype').find(':selected').val());
+	bValidating = true;
+	setButtonDisabled();
 
 	// Perform AJAX request with jQuery
 	$.ajax(
@@ -95,6 +116,7 @@ function uploadFile()
 		data: oFormData,
 		processData: false, // Prevent jQuery from processing FormData
 		contentType: false, // Let FormData set the correct multipart headers
+		headers: {'Last-Modified': new Date().toUTCString()},
 		xhr: function () 
 		{
 			// Customize the XMLHttpRequest to track progress
@@ -123,42 +145,32 @@ function uploadFile()
 			{
 				$('#upload_complete').remove();
 				$('.file_uploading').hide();
-				$('.validating').show();
-				checkMessages();
+				$('.validating').css('display', 'flex');
+				checkValidating();
 			}, 1500);
 		}
 	});
 	oFileToUpload = null;
-	sPrevText = '';
-	$('.file_textarea').hide();
-//	let oSuccess = $('.file_success');
-//	oSuccess.html('').hide();
-//	oSuccess[0].value = '';
+	$('.file_textarea').val('').hide();
+	$('.drop_file').css('display', 'none');
+	$('.cannotdrop_file').css('display', 'none');
 	$('#progressBar').val(0);
 	$('.file_uploading').show();
 }
 
-function displayFile()
-{
-	let sFilename = oFileToUpload.name;
-	let oSuccess = $('.file_success');
-	$('.file_textarea').hide();
-	sPrevText = $('.file_textarea').val();
-	oSuccess.show().html(`<strong>${sFilename}</strong> selected <i id="cancel_file" class="fa fa-times"></i>`);
-	$('#cancel_file').on('click', function()
-	{
-		$('.file_textarea').show().val(sPrevText);
-		oFileToUpload = null;
-		sPrevText = '';
-		oSuccess.html('').hide();
-		oSuccess[0].value = '';
-	});
-}
 
 
 function setVersions()
 {
-	let sStandard = $('#select_standard').val();
+	let sStandard = $('#select_standard').find(':selected').val();
+	let oSelectVersion = $('#select_version');
+	if (sStandard === sC2CMvtNull)
+	{
+		oSelectVersion.find('option').remove();
+		$('#select_encoding').find('option').remove();
+		$('#select_messagetype').find('option').remove();
+		return;
+	}
 	let oVersions = oLoadedVersions[sStandard];
 	if (oVersions === undefined)
 	{
@@ -176,12 +188,11 @@ function setVersions()
 	}
 	else
 	{
-		let sOptions = '<option value="0"></option>';
+		let sOptions = `<option value="${sC2CMvtNull}"></option>`;
 		for (let sVersion of oVersions.values())
 		{
 			sOptions += `<option value="${sVersion}">${sVersion}</option>`;
 		}
-		let oSelectVersion = $('#select_version');
 		oSelectVersion.find('option').remove();
 		oSelectVersion.append(sOptions);
 	}
@@ -190,8 +201,14 @@ function setVersions()
 
 function setMessageTypes()
 {
-	let sStandard = $('#select_standard').val();
-	let sVersion = $('#select_version').val();
+	let sStandard = $('#select_standard').find(':selected').val();
+	let sVersion = $('#select_version').find(':selected').val();
+	let oSelectMessageType = $('#select_messagetype');
+	if (sVersion === sC2CMvtNull)
+	{
+		oSelectMessageType.find('option').remove();
+		return;
+	}
 	let oStandardMessageTypes = oLoadedMessageTypes[sStandard];
 	let oVersionMessageTypes;
 	if (oStandardMessageTypes !== undefined)
@@ -220,12 +237,12 @@ function setMessageTypes()
 	}
 	else
 	{
-		let sOptions = '<option value="0"></option>';
+		let sOptions = `<option value="${sC2CMvtNull}"></option>`;
 		for (let sMessageType of oVersionMessageTypes.values())
 		{
 			sOptions += `<option value="${sMessageType}">${sMessageType}</option>`;
 		}
-		let oSelectMessageType = $('#select_messagetype');
+		
 		oSelectMessageType.find('option').remove();
 		oSelectMessageType.append(sOptions);
 	}
@@ -234,8 +251,14 @@ function setMessageTypes()
 
 function setEncodings()
 {
-	let sStandard = $('#select_standard').val();
-	let sVersion = $('#select_version').val();
+	let sStandard = $('#select_standard').find(':selected').val();
+	let sVersion = $('#select_version').find(':selected').val();
+	let oSelectEncoding = $('#select_encoding');
+	if (sVersion === sC2CMvtNull)
+	{
+		oSelectEncoding.find('option').remove();
+		return;
+	}
 	let oStandardEncodings = oLoadedEncodings[sStandard];
 	let oVersionEncodings;
 	if (oStandardEncodings !== undefined)
@@ -263,12 +286,12 @@ function setEncodings()
 	}
 	else
 	{
-		let sOptions = '<option value="0"></option>';
+		let sOptions = `<option value="${sC2CMvtNull}"></option>`;
 		for (let sEncoding of oVersionEncodings.values())
 		{
 			sOptions += `<option value="${sEncoding}">${sEncoding}</option>`;
 		}
-		let oSelectEncoding = $('#select_encoding');
+		
 		oSelectEncoding.find('option').remove();
 		oSelectEncoding.append(sOptions);
 	}
@@ -280,15 +303,33 @@ function resetOptions()
 	$('#select_version,#select_encoding,#select_messagetype').find('option').remove();
 }
 
+function checkValidating()
+{
+	$.ajax(
+	{
+		'url': 'status',
+		'method': 'POST',
+		'dataType': 'JSON',
+		'data': {'include_messages': false}
+	}).done(doneStatus);
+}
+
 
 function checkMessages()
 {
 	$.ajax(
 	{
 		'url': 'status',
-		'method': 'GET',
-		'dataType': 'JSON'
-	}).done(function (oData)
+		'method': 'POST',
+		'dataType': 'JSON',
+		'data': {'include_messages': true}
+	}).done(doneStatus);
+}
+
+
+function doneStatus(oData)
+{
+	if (oData.messages)
 	{
 		let sVal = '';
 		for (let sMsg of oData.messages.values())
@@ -296,23 +337,58 @@ function checkMessages()
 			sVal += sMsg + '\n';
 		}
 		$('.msgcontainer').val(sVal);
-		if (oData.validating)
+	}
+	if (oData.validating)
+	{
+		bValidating = true;
+		$('.validating').css('display', 'flex');
+		$('.file_textarea').hide();
+		setButtonDisabled();
+		setTimeout(checkValidating, 1000);
+	}
+	else
+	{
+		if (oData.messages)
 		{
-			$('.validating').show();
-			$('.file_textarea').hide();
-			$('button').prop('disabled', true);
-			setTimeout(checkMessages, 1000);
+			bValidating = false;
+			setButtonDisabled();
+			$('.validating').css('display', 'none');
+			$('.file_textarea').show();
 		}
 		else
 		{
-			$('button').prop('disabled', false);
-			$('.validating').hide();
-			$('.file_textarea').show();
+			checkMessages();
 		}
-	});
+	}
 }
 
+function optionsNotSet()
+{
+	return isUndefinedNullOrEmpty($('#select_standard').find(':selected').val()) || 
+			isUndefinedNullOrEmpty($('#select_version').find(':selected').val())|| 
+			isUndefinedNullOrEmpty($('#select_encoding').find(':selected').val())|| 
+			isUndefinedNullOrEmpty($('#select_messagetype').find(':selected').val());
+}
 
+function setButtonDisabled()
+{
+	if (bValidating)
+	{
+		$('button').prop('disabled', true);
+	}
+	else
+	{
+		let bOptionsNotSet = optionsNotSet();
+		$('#btnChooseFile').prop('disabled', bOptionsNotSet);
+		$('#btnValidate').prop('disabled', bOptionsNotSet || $('.file_textarea').val().length === 0);
+		$('button.log').prop('disabled', $('.msgcontainer').val().length === 0);
+	}
+}
+
+function isUndefinedNullOrEmpty(sStr)
+{
+	return sStr === undefined || sStr === null || sStr.length === 0 || sStr === sC2CMvtNull;
+}
 function resetLog()
 {
 	$.ajax(
