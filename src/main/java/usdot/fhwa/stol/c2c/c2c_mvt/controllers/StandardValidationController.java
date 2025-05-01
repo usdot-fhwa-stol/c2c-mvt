@@ -49,30 +49,82 @@ import usdot.fhwa.stol.c2c.c2c_mvt.decoders.Decoder;
 import usdot.fhwa.stol.c2c.c2c_mvt.messages.C2CMessage;
 
 /**
- *
- * @author Federal Highway Administration
+ * This is the main class/controller of the application. It handles all of the user
+ * requests for validation. It uses the c2c-mvt.json configuration file to know
+ * what standards are implemented and what classes (decoder, parser, validator)
+ * to instantiate for those standards.
+ * 
+ * @author Aaron Cherney
  */
 @RestController
 public class StandardValidationController
 {
+
+	/**
+	 * Path of the working directory of the application. Gets set to the directory
+	 * the .jar is located
+	 */
 	private static String m_sWorkingDir;
+
+	/**
+	 * Flag indicating if a message is currently being validated
+	 */
 	private final AtomicBoolean m_oValidationInProgress = new AtomicBoolean(false);
+
+	/**
+	 * This object contains all of the configuration items for the implemented standards
+	 */
 	private JsonObject STANDARDS;
+
+	/**
+	 * Logger instance
+	 */
 	private static final Logger LOGGER = LoggerFactory.getLogger(StandardValidationController.class);
+
+	/**
+	 * In memory log used for storing messages related to validation that will 
+	 * be sent to the client
+	 */
 	private static final ArrayList<String> LOGS = new ArrayList();
+
+	/**
+	 * Format string used for dates
+	 */
 	private static final String DATEFMT = "yyyy-MM-dd'T'HH:mm:ss:SSS";
+
+	/**
+	 * Directory where messages that are validated are saved
+	 */
 	private final String FILEDIR = "messages";
+
+	/**
+	 * UUID of the message currently being validated
+	 */
 	private static String m_sCurrentMsg = null;
+
+	/**
+	 * Timeout in milliseconds used to reset {@link MaxUploadSizeExceededExceptionHandler#m_oRequestTimes}
+	 */
 	private final long RESETERRORS = 3600000;
-	private long m_lLastGetStandards = System.currentTimeMillis();
+
+	/**
+	 * Time in milliseconds that {@link MaxUploadSizeExceededExceptionHandler#m_oRequestTimes}
+	 * was last reset
+	 */
+	private long m_lLastReset = System.currentTimeMillis();
 	
+	/**
+	 * Initializes the controller. This method sets {@link #m_sWorkingDir} 
+	 * and reads src/main/resources/c2c-mvt.json to read the configuration of
+	 * C2C standards that are implemented into {@link #STANDARDS}
+	 */
 	@PostConstruct
 	public void init()
 	{
 		try
 		{
 			String sJarPath = C2CMVTApplication.class.getProtectionDomain().getCodeSource().getLocation().toURI().toString();
-			if (sJarPath.startsWith("jar:nested:/"))
+			if (sJarPath.startsWith("jar:nested:/")) // check if the path needs to modified to be a valid file system path
 				sJarPath = sJarPath.substring("jar:nested:/".length());
 			if (sJarPath.startsWith("file:/"))
 				sJarPath = sJarPath.substring("file:/".length());
@@ -103,103 +155,205 @@ public class StandardValidationController
 		}
 	}
 	
-	
+	/**
+	 * Creates a String representing a JSON Object which contains the status of the controller 
+	 * (whether or not validation is currently happening) and if bIncludeMessages 
+	 * is true all of the messages related to validation that are in memory
+	 * @param bIncludeMessages flag to include messages in the response
+	 * @return {@link ResponseEntity} with status code 200 and the String 
+	 * representing a JSON Object as the body if no exceptions occur, otherwise 
+	 * the status code is 500 and the body contains an error message
+	 */
 	@PostMapping("/status")
-    public String getStatus(@RequestParam(name = "include_messages") boolean bIncludeMessages) 
+    public ResponseEntity<String> getStatus(@RequestParam(name = "include_messages") boolean bIncludeMessages) 
 	{
-		LOGGER.debug("getStatus() invoked");
-		StringBuilder oRet = new StringBuilder();
-		oRet.append('{');
-		oRet.append("\"validating\":").append(m_oValidationInProgress.get());
-		if (bIncludeMessages)
+		try
 		{
-			oRet.append(',');
-			oRet.append("\"messages\":[");
-			synchronized (LOGS)
+			LOGGER.debug("getStatus() invoked");
+			StringBuilder oRet = new StringBuilder();
+			oRet.append('{');
+			oRet.append("\"validating\":").append(m_oValidationInProgress.get());
+			if (bIncludeMessages)
 			{
-				for (String sMsg : LOGS)
+				oRet.append(',');
+				oRet.append("\"messages\":[");
+				synchronized (LOGS)
 				{
-					oRet.append("\"").append(sMsg.replaceAll("\\\"", "\\\\\"").replaceAll("\\\n", "\\\\n").replaceAll("\\\t", "\\\\t")).append("\",");
+					for (String sMsg : LOGS)
+					{
+						oRet.append("\"").append(sMsg.replaceAll("\\\"", "\\\\\"").replaceAll("\\\n", "\\\\n").replaceAll("\\\t", "\\\\t")).append("\","); // escape characters to have valid JSON
+					}
+					if (LOGS.size() > 0)
+						oRet.setLength(oRet.length() -1); // remove trailing comma
 				}
-				if (LOGS.size() > 0)
-					oRet.setLength(oRet.length() -1); // remove trailing comma
+				oRet.append("]");
 			}
-			oRet.append("]");
+			oRet.append('}');
+			return ResponseEntity.ok(oRet.toString());
 		}
-		oRet.append('}');
-		return oRet.toString();
+		catch (Exception oEx)
+		{
+			logException(LOGGER, oEx, null);
+			return ResponseEntity.internalServerError().body("{\"error\": \"Failed to get status\"}");
+		}
 	}
 
-	
+	/**
+	 * Reads the configuration object {@link #STANDARDS} to create a String 
+	 * representing a JSON Array containing all of the implemented C2C standards.
+	 * It also checks if enough time has elapsed to reset 
+	 * {@link MaxUploadSizeExceededExceptionHandler#m_oRequestTimes} and reset
+	 * it when necessary
+	 * 
+	 * @return {@link ResponseEntity} with status code 200 and the String 
+	 * representing a JSON Array as the body if no exceptions occur, otherwise 
+	 * the status code is 500 and the body contains an error message
+	 */
 	@GetMapping("/standards")
-    public String getStandards() {
-        LOGGER.debug("getStandards() invoked");
-		if (m_lLastGetStandards + RESETERRORS > System.currentTimeMillis())
+    public ResponseEntity<String> getStandards() 
+	{
+		try
 		{
-			m_lLastGetStandards = System.currentTimeMillis();
-			synchronized (MaxUploadSizeExceededExceptionHandler.m_oRequestTimes)
+			LOGGER.debug("getStandards() invoked");
+			if (m_lLastReset + RESETERRORS > System.currentTimeMillis())
 			{
-				MaxUploadSizeExceededExceptionHandler.m_oRequestTimes.clear();
+				m_lLastReset = System.currentTimeMillis();
+				synchronized (MaxUploadSizeExceededExceptionHandler.m_oRequestTimes)
+				{
+					MaxUploadSizeExceededExceptionHandler.m_oRequestTimes.clear();
+				}
 			}
+
+			List<JsonValue> oStandards = new ArrayList();
+			for (JsonString oStandard : STANDARDS.getProperties().keySet())
+			{
+				oStandards.add(oStandard);
+			}
+			return ResponseEntity.ok(oStandards.toString());
 		}
-			
-		List<JsonValue> oStandards = new ArrayList();
-		for (JsonString oStandard : STANDARDS.getProperties().keySet())
+		catch (Exception oEx)
 		{
-			oStandards.add(oStandard);
+			logException(LOGGER, oEx, null);
+			return ResponseEntity.internalServerError().body("{\"error\": \"Failed to get standards\"}");
 		}
-        return oStandards.toString();
+        
     }
 	
+	/**
+	 * Reads the configuration object {@link #STANDARDS} to create a String 
+	 * representing a JSON Array containing all of the implemented versions
+	 * for the given C2C standards
+	 * @param sStandard name of the C2C standard
+	 * 
+	 * @return {@link ResponseEntity} with status code 200 and the String 
+	 * representing a JSON Array as the body if no exceptions occur, otherwise 
+	 * the status code is 500 and the body contains an error message
+	 */
 	@PostMapping("/versions")
-	public String getVersions(@RequestParam(name = "standard") String sStandard)
+	public ResponseEntity<String> getVersions(@RequestParam(name = "standard") String sStandard)
 	{
-		LOGGER.debug(String.format("getVersions() invoked with standard = %s", sStandard));
-		List<IJsonValue> oVersions = new ArrayList();
-		for (IJsonString oVersion : STANDARDS.get(sStandard).requireObject().get("versions").requireObject().getProperties().keySet())
+		try
 		{
-			oVersions.add(oVersion);
+			LOGGER.debug(String.format("getVersions() invoked with standard = %s", sStandard));
+			List<IJsonValue> oVersions = new ArrayList();
+			for (IJsonString oVersion : STANDARDS.get(sStandard).requireObject().get("versions").requireObject().getProperties().keySet())
+			{
+				oVersions.add(oVersion);
+			}
+
+			return ResponseEntity.ok(oVersions.toString());
+		}
+		catch (Exception oEx)
+		{
+			logException(LOGGER, oEx, null);
+			return ResponseEntity.internalServerError().body("{\"error\": \"Failed to get versions\"}");
+		}
+	}
+	
+	/**
+	 * Reads the configuration object {@link #STANDARDS} to create a String 
+	 * representing a JSON Array containing all of the implemented encodings 
+	 * for the given C2C standard and version.
+	 * @param sStandard name of the C2C standard
+	 * @param sVersion version of the C2C standard
+	 * @return {@link ResponseEntity} with status code 200 and the String 
+	 * representing a JSON Array as the body if no exceptions occur, otherwise 
+	 * the status code is 500 and the body contains an error message
+	 */
+	@PostMapping("/encodings")
+	public ResponseEntity<String> getEncodings(@RequestParam(name = "standard") String sStandard, @RequestParam(name = "version") String sVersion)
+	{
+		try
+		{
+			LOGGER.debug(String.format("getEncodings() invoked with standard = %s and version = %s", sStandard, sVersion));
+			IJsonValue oEncodings = STANDARDS.get(sStandard).requireObject().get("versions").requireObject().get(sVersion).requireObject().get("encodings");
+			if (oEncodings == null)
+				return ResponseEntity.ok("[\"UTF-8\"]");
+
+			return ResponseEntity.ok(oEncodings.toString());
+		}
+		catch (Exception oEx)
+		{
+			logException(LOGGER, oEx, null);
+			return ResponseEntity.internalServerError().body("{\"error\": \"Failed to get encodings\"}");
+		}
+	}
+	
+	/**
+	 * Reads the configuration object {@link #STANDARDS} to create a String 
+	 * representing a JSON Array containing all of the implemented message types
+	 * for the given C2C standard and version.
+	 * @param sStandard name of the C2C standard
+	 * @param sVersion version of the C2C standard
+	 * @return {@link ResponseEntity} with status code 200 and the String 
+	 * representing a JSON Array as the body if no exceptions occur, otherwise 
+	 * the status code is 500 and the body contains an error message
+	 */
+	@PostMapping("/messagetypes")
+	public ResponseEntity<String> getMessageTypes(@RequestParam(name = "standard") String sStandard, @RequestParam(name = "version") String sVersion)
+	{
+		try
+		{
+			LOGGER.debug(String.format("getMessageTypes() invoked with standard = %s and version = %s", sStandard, sVersion));
+			IJsonValue oTypes = STANDARDS.get(sStandard).requireObject().get("versions").requireObject().get(sVersion).requireObject().get("messageTypes");
+			if (oTypes == null)
+				return ResponseEntity.ok("[]");
+
+			return ResponseEntity.ok(oTypes.toString());
+		}
+		catch (Exception oEx)
+		{
+			logException(LOGGER, oEx, null);
+			return ResponseEntity.internalServerError().body("{\"error\": \"Failed to get message types\"}");
 		}
 		
-		return oVersions.toString();
 	}
 	
-	
-	@PostMapping("/encodings")
-	public String getEncodings(@RequestParam(name = "standard") String sStandard, @RequestParam(name = "version") String sVersion)
-	{
-		LOGGER.debug(String.format("getEncodings() invoked with standard = %s and version = %s", sStandard, sVersion));
-		IJsonValue oEncodings = STANDARDS.get(sStandard).requireObject().get("versions").requireObject().get(sVersion).requireObject().get("encodings");
-		if (oEncodings == null)
-			return "[\"UTF-8\"]";
-		
-		return oEncodings.toString();
-	}
-	
-	
-	@PostMapping("/messagetypes")
-	public String getMessageTypes(@RequestParam(name = "standard") String sStandard, @RequestParam(name = "version") String sVersion)
-	{
-		LOGGER.debug(String.format("getMessageTypes() invoked with standard = %s and version = %s", sStandard, sVersion));
-		IJsonValue oTypes = STANDARDS.get(sStandard).requireObject().get("versions").requireObject().get(sVersion).requireObject().get("messageTypes");
-		if (oTypes == null)
-			return "[]";
-
-		return oTypes.toString();
-	}
-	
-	
+	/**
+	 * If there isn't a message currently being validated, this method assigns
+	 * a UUID to the file that is uploaded, saves it to disk, and creates a new
+	 * thread to asynchronously validate the message.
+	 * @param oData a file containing the message to validate
+	 * @param sStandard name of the C2C standard
+	 * @param sVersion version of the C2C standard
+	 * @param sEncoding encoding used for the message
+	 * @param sMessageType the type of message being validated, if known and necessary
+	 * to validate
+	 * @return {@link ResponseEntity} with status code 200 and a String 
+	 * representing a JSON Object saying the message was received as the body 
+	 * if no exceptions occur, otherwise the status code is 500 and the body 
+	 * contains an error message
+	 */
 	@PostMapping("/upload")
-	public String uploadMessages(@RequestParam(name = "uploaded_file") MultipartFile oData, @RequestParam(name = "standard") String sStandard, 
+	public ResponseEntity<String> uploadMessages(@RequestParam(name = "uploaded_file") MultipartFile oData, @RequestParam(name = "standard") String sStandard, 
 								 @RequestParam(name = "version") String sVersion, @RequestParam(name = "encoding") String sEncoding, 
 								 @RequestParam(name = "message_type") String sMessageType)
 	{
 		try
 		{
 			if (m_oValidationInProgress.get())
-				return "{\"msg\": \"Failed to upload. Validation in progress\"}";
+				return ResponseEntity.internalServerError().body("{\"error\": \"Failed to upload. Validation in progress\"}");
 			UUID oId = UUID.randomUUID();
-			m_sCurrentMsg = oId.toString();
 			String sOriginalFilename = oData.getOriginalFilename();
 			if (sOriginalFilename == null)
 				throw new IOException("Failed to determine file type");
@@ -213,41 +367,58 @@ public class StandardValidationController
 				oOut.write(yPayload);
 			}
 			m_oValidationInProgress.set(true);
+			m_sCurrentMsg = oId.toString();
 			new Thread(() -> validateMessages(yPayload, sStandard, sVersion, sEncoding, sMessageType)).start();
+			return ResponseEntity.ok("{\"msg\": \"Received\"}");
 		}
-		catch (IOException oEx)
+		catch (Exception oEx)
 		{
 			logException(LOGGER, oEx, null);
-			return "{\"msg\": \"Failed to upload.\"}";
+			return ResponseEntity.badRequest().body("{\"error\": \"Failed to upload.\"}");
 		}
-
-		return "{\"msg\": \"Received\"}";
 	}
 	
-	
+	/**
+	 * Deletes all files that have been uploaded for validation and resets the
+	 * in memory list of messages.
+	 * @return {@link ResponseEntity} with status code 200 and a String 
+	 * representing a JSON Object saying the reset was a success as the body 
+	 * if no exceptions occur, otherwise the status code is 500 and the body 
+	 * contains an error message
+	 */
 	@GetMapping("/resetLog")
-	public String resetLog()
+	public ResponseEntity<String> resetLog()
 	{
-		LOGGER.debug("resetLog() invoked");
-		synchronized (LOGS)
+		try
 		{
-			LOGS.clear();
-		}
-		try (DirectoryStream<Path> oDir = Files.newDirectoryStream(Path.of(m_sWorkingDir, FILEDIR)))
-		{
-			for (Path oFile : oDir)
+			LOGGER.debug("resetLog() invoked");
+			synchronized (LOGS)
 			{
-				Files.deleteIfExists(oFile);
+				LOGS.clear();
 			}
+			try (DirectoryStream<Path> oDir = Files.newDirectoryStream(Path.of(m_sWorkingDir, FILEDIR)))
+			{
+				for (Path oFile : oDir)
+				{
+					Files.deleteIfExists(oFile);
+				}
+			}
+			return ResponseEntity.ok("{\"msg\": \"Success\"}");
 		}
-		catch (IOException oEx)
+		catch (Exception oEx)
 		{
 			logException(LOGGER, oEx, null);
+			return ResponseEntity.badRequest().body("{\"error\": \"Failed to upload.\"}");
 		}
-		return "{\"msg\": \"Success\"}";
+		
 	}
 	
-	
+	/**
+	 * Creates a zip file containing all of the messages related to validation
+	 * and each file that has been uploaded for validation.
+	 * @return {@link ResponseEntity} with status code 200 and the zipped file as the body 
+	 * if no exceptions occur, otherwise the status code is 500
+	 */
 	@GetMapping("/downloadLog")
 	public ResponseEntity<Resource> downloadLog()
 	{
@@ -284,13 +455,22 @@ public class StandardValidationController
 		}
 		catch (IOException oEx)
 		{
-			for (StackTraceElement oSTE : oEx.getStackTrace())
-				LOGGER.error(oSTE.toString());
-
+			logException(LOGGER, oEx, null);
 			return ResponseEntity.internalServerError().build();
 		}
 	}
 	
+	/**
+	 * Validates the given payload by instantiating the configured Decoder, Parser,
+	 * and Validator for the given C2C standard, version, encoding, and message
+	 * type.
+	 * @param yPayload messages to validate
+	 * @param sStandard name of the C2C standard
+	 * @param sVersion version of the C2C standard
+	 * @param sEncoding encoding used for the message
+	 * @param sMessageType the type of message being validated, if known and necessary
+	 * to validate
+	 */
 	private void validateMessages(byte[] yPayload, String sStandard, String sVersion, String sEncoding, String sMessageType)
 	{
 		Decoder oDecoder = null;
@@ -310,11 +490,11 @@ public class StandardValidationController
 				oDecoder.setEncoding(sEncoding);
 				ArrayList<C2CMessage> oMessages = oDecoder.decode(yPayload);
 			}
-			addMessage("Validation completed with no errors");
+			addLogRecord("Validation completed with no errors");
 		}
 		catch (C2CMVTException oEx)
 		{
-			addMessage("Validation completed with errors");
+			addLogRecord("Validation completed with errors");
 			logException(LOGGER, oEx.m_oOriginal, oEx.m_sAdditionalMessage);
 		}
 		finally
@@ -324,8 +504,13 @@ public class StandardValidationController
 		}
 	}
 	
-	
-	private static String getMessage(String sMsg)
+	/**
+	 * Formats the given message with a timestamp and the UUID of the message
+	 * currently being validated if a message is being validated
+	 * @param sMsg message to format
+	 * @return formatted message String
+	 */
+	private static String formatMessage(String sMsg)
 	{
 		if (m_sCurrentMsg != null)
 			return String.format("%s - %s - %s", new SimpleDateFormat(DATEFMT).format(System.currentTimeMillis()), m_sCurrentMsg, sMsg);
@@ -333,19 +518,32 @@ public class StandardValidationController
 			return String.format("%s - %s", new SimpleDateFormat(DATEFMT).format(System.currentTimeMillis()), sMsg);
 	}
 	
-	
+	/**
+	 * Wrapper for {@link #logException(org.slf4j.Logger, java.lang.Exception, java.lang.String) 
+	 * using {@link #LOGGER} as the Logger. Logs an exception to the log4j2 file
+	 * and calls {@link #addLogRecord} with the extra message and {@link Exception#toString()}
+	 * @param oEx Exception to log
+	 * @param sExtra Extra message to log
+	 */
 	public static void logException(Exception oEx, String sExtra)
 	{
 		logException(LOGGER, oEx, sExtra);
 	}
 
+	/**
+	 * Logs an exception to the log4j2 file and calls {@link #addLogRecord} with 
+	 * the extra message and {@link Exception#toString()}
+	 * @param oLogger Logger to use
+	 * @param oEx Exception to log
+	 * @param sExtra Extra message to log
+	 */
 	public static void logException(Logger oLogger, Exception oEx, String sExtra)
 	{
 		StringBuilder sBuf = new StringBuilder();
 		if (sExtra != null)
 			sBuf.append(sExtra).append('\n').append('\t');
 		sBuf.append(oEx.toString());
-		addMessage(sBuf.toString());
+		addLogRecord(sBuf.toString());
 		sBuf.append('\n').append('\t');
 		StackTraceElement[] oStackTrace = oEx.getStackTrace();
 		for (StackTraceElement oSTE : oStackTrace)
@@ -357,15 +555,17 @@ public class StandardValidationController
 		
 		String sLog = sBuf.toString();
 		oLogger.error(sLog);
-		
 	}
 	
-	
-	public static void addMessage(String sMsg)
+	/**
+	 * Adds the message to the in memory list of log messages {@link #LOGS}
+	 * @param sMsg The message to log
+	 */
+	public static void addLogRecord(String sMsg)
 	{
 		synchronized (LOGS)
 		{
-			LOGS.add(getMessage(sMsg));
+			LOGS.add(formatMessage(sMsg));
 		}
 	}
 }

@@ -1,9 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package usdot.fhwa.stol.c2c.c2c_mvt.decoders;
 
 import com.github.erosb.jsonsKema.JsonParseException;
@@ -23,15 +17,18 @@ import usdot.fhwa.stol.c2c.c2c_mvt.controllers.StandardValidationController;
 import usdot.fhwa.stol.c2c.c2c_mvt.messages.JsonC2CMessage;
 
 /**
- *
- * @author Federal Highway Administration
+ * Implementation of {@link Decoder} for Json Messages
+ * @author Aaron Cherney
  */
 public class JsonDecoder extends Decoder
 {
-	public JsonDecoder()
-	{
-	}
-	
+
+	/**
+	 * Decodes the message into a list of {@link JsonC2CMessage}s.
+	 * @param yBytes message(s) in bytes
+	 * @return A list of the decoded messages
+	 * @throws C2CMVTException
+	 */
 	@Override
 	public ArrayList<JsonC2CMessage> decode(byte[] yBytes)
 		throws C2CMVTException
@@ -50,8 +47,13 @@ public class JsonDecoder extends Decoder
 				oMessages.add(checkSyntax(yMsg));
 				++nMsgCount;
 			}
-			for (JsonC2CMessage oMsg : oMessages)
-				StandardValidationController.addMessage(oMsg.getMessage());
+			
+			// for testing purposing
+			{
+				for (JsonC2CMessage oMsg : oMessages)
+					StandardValidationController.addLogRecord(oMsg.getMessage());
+			} // remove this block before release
+			
 			return oMessages;
 		}
 		catch (JsonParseException oEx)
@@ -60,6 +62,17 @@ public class JsonDecoder extends Decoder
 		}
 	}
 
+	/**
+	 * Checks for multiple valid messages defined by the bytes. Messages can be separated
+	 * by an empty string, a single comma, or whitespace characters. Tests for
+	 * and ignores Byte order marking and ensures that the bytes could define
+	 * a JSON Object or Array by testing for matching {} or [] respectively
+	 * 
+	 * 
+	 * @param yBytes the message(s) in bytes
+	 * @return list of separate messages as byte[]
+	 * @throws C2CMVTException
+	 */
 	@Override
 	protected ArrayList<byte[]> separateMessages(byte[] yBytes)
 		throws C2CMVTException
@@ -129,6 +142,13 @@ public class JsonDecoder extends Decoder
 		return yMessages;
 	}
 
+	/**
+	 * 
+	 * @param yBytes message to check security on
+	 * @return always true for now, since there are no threats we need to test 
+	 * for in json messages
+	 * @throws C2CMVTException
+	 */
 	@Override
 	protected boolean checkSecurity(byte[] yBytes)
 		throws C2CMVTException
@@ -137,6 +157,14 @@ public class JsonDecoder extends Decoder
 		return true;
 	}
 
+	/**
+	 * Attempts to create a {@link JsonValue} which can be a Json Object or Array.
+	 * If the syntax is incorrect the JsonParser will throw an Exception.
+	 * @param yBytes message in bytes to check
+	 * @return {@link JsonC2CMessage} that wrap yBytes and contains the created
+	 * Json Object/Array
+	 * @throws C2CMVTException
+	 */
 	@Override
 	protected JsonC2CMessage checkSyntax(byte[] yBytes)
 		throws C2CMVTException
