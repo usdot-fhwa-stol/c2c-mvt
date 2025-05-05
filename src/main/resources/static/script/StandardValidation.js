@@ -310,7 +310,7 @@ function checkValidating()
 		'url': 'status',
 		'method': 'POST',
 		'dataType': 'JSON',
-		'data': {'include_messages': false}
+		'data': {'include_validation_records': false}
 	}).done(doneStatus);
 }
 
@@ -322,7 +322,7 @@ function checkMessages()
 		'url': 'status',
 		'method': 'POST',
 		'dataType': 'JSON',
-		'data': {'include_messages': true}
+		'data': {'include_validation_records': true}
 	}).done(doneStatus);
 }
 
