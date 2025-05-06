@@ -13,25 +13,27 @@ package usdot.fhwa.stol.c2c.c2c_mvt;
  */
 public class C2CMVTException extends Exception
 {
-
 	/**
-	 * The origianal Exception
+	 * The original Exception
 	 */
-	public Exception m_oOriginal;
+	public Exception originalException;
 
+	
 	/**
 	 * An additional message to give more details about the exception
 	 */
-	public String m_sAdditionalMessage;
+	public String additionalMessage;
+	
 	
 	/**
-	 * Constructor that sets {@link #m_oOriginal} and {@link #m_sAdditionalMessage}
-	 * @param excptn original exception
-	 * @param string additional message giving details about the exception
+	 * Constructor that sets {@link #originalException} and {@link #additionalMessage}
+	 * @param ex original exception
+	 * @param msg additional message giving details about the exception
 	 */
-	public C2CMVTException(Exception oEx, String sMsg)
+	public C2CMVTException(Exception ex, String msg)
 	{
-		m_oOriginal = oEx;
-		m_sAdditionalMessage = sMsg;
+		super(msg, ex);
+		originalException = ex;
+		additionalMessage = msg;
 	}
 }

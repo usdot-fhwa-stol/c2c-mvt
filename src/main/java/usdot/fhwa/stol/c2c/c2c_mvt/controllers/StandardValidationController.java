@@ -565,7 +565,7 @@ public class StandardValidationController
 					catch (C2CMVTException ex)
 					{
 						addLogRecord(String.format("Validation completed with errors for message %d of %d", msgNum, msgTotal), uuidAsString);
-						logException(LOGGER, ex.m_oOriginal, ex.m_sAdditionalMessage, uuidAsString);
+						logException(LOGGER, ex.originalException, ex.additionalMessage, uuidAsString);
 					}
 					finally
 					{
@@ -577,7 +577,7 @@ public class StandardValidationController
 		catch (C2CMVTException ex)
 		{
 			addLogRecord("Validation failed to complete", uuidAsString);
-			logException(LOGGER, ex.m_oOriginal, ex.m_sAdditionalMessage, uuidAsString);
+			logException(LOGGER, ex.originalException, ex.additionalMessage, uuidAsString);
 		}
 		finally
 		{

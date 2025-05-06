@@ -30,11 +30,17 @@ public class C2CMessage
 	
 	/**
 	 * Constructor. Sets {@link #messageBytes}
-	 * @param bytes The message in bytes
+	 * @param messageBytes The message in bytes
 	 */
 	public C2CMessage(byte[] messageBytes)
 	{
 		this.messageBytes = messageBytes;
+	}
+	
+	
+	public byte[] getBytes()
+	{
+		return messageBytes;
 	}
 	
 	
