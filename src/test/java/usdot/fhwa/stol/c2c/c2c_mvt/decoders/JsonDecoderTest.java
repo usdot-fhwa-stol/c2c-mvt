@@ -43,7 +43,7 @@ class JsonDecoderTest {
 
     @Test
     void testSeparateMessages_ValidJsonArray() throws Exception {
-        String json = "[{\"key1\":\"value1\"},{\"key2\":\"value2\"}]";
+        String json = "{\"key1\":\"value1\"},{\"key2\":\"value2\"}";
         ArrayList<byte[]> messages = jsonDecoder.separateMessages(json.getBytes(StandardCharsets.UTF_8));
 
         assertThat(messages).hasSize(2);
