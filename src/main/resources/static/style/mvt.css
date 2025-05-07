@@ -1,0 +1,178 @@
+* 
+{
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+}
+
+body 
+{
+	font-family: Arial, sans-serif;
+	height: 100vh;
+	display: flex;
+	flex-direction: column;
+}
+
+.header 
+{
+	background-color: #15396c;
+	color: #fff;
+	padding: 20px;
+	text-align: center;
+}
+
+.container 
+{
+	flex: 1;
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 20px;
+	padding: 20px;
+}
+
+.card 
+{
+	background-color: #fff;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	padding: 20px;
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.card-title 
+{
+	margin-bottom: 15px;
+	text-align: left;
+	background-color: #15396c;
+	color: #fff;
+	height: 45px;
+	line-height: 45px;
+	padding-left: 5px;
+}
+
+.textarea 
+{
+	width: 100%;
+	flex: 1;
+	margin-bottom: 15px;
+	padding: 10px;
+	resize: vertical;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+}
+
+.file_uploading,
+.validating,
+.cannotdrop_file,
+.drop_file
+{
+	display:none;
+}
+
+.button-container 
+{
+	display: flex;
+	justify-content: flex-end;
+	gap: 10px;
+}
+
+button 
+{
+	padding: 10px 20px;
+	background-color: #15396c;
+	color: white;
+	border: none;
+	border-radius: 4px;
+	cursor: pointer;
+}
+
+button:hover 
+{
+	background-color: #ccccff;
+}
+
+.select-container 
+{
+	display: grid;
+	grid-template-columns: 1fr 1fr 1fr 1fr;
+	gap: 10px;
+	margin-bottom: 15px;
+	padding: 0px 5px 0px 5px;
+}
+
+.select-container select
+{
+	min-width: 80px;
+	max-width: 80px;
+}
+
+input[type="file"]
+{
+	position: absolute; 
+	left: -99999rem
+}
+
+#cancel_file
+{
+	color: #f00;
+	cursor: pointer;
+}
+
+.isDragging
+{
+	outline: 2px dashed #92b0b3;
+}
+
+.cannotdrop_file
+{
+	background-color: #ff8888
+}
+
+.centered-element
+{
+	position: relative;
+	width: 50%;
+	top: 50%;
+	left: 50%;
+	-moz-transform: translateX(-50%) translateY(-50%);
+	-webkit-transform: translateX(-50%) translateY(-50%);
+	transform: translateX(-50%) translateY(-50%);
+	text-align: center;
+}
+
+.centeredlargefont
+{
+	justify-content: center;
+	align-items: center;
+	font-size: x-large;
+}
+
+button:disabled,
+button[disabled]
+{
+	border: 1px solid #999999;
+	background-color: #cccccc;
+	color: #666666;
+	cursor: not-allowed;
+}
+
+/* Responsive layout - stack columns on small screens */
+@media screen and (max-width: 768px) 
+{
+	.container
+	{
+		grid-template-columns: 1fr;
+	}
+	
+}
+
+@media (max-width: 676px), (min-width: 768px) and (max-width: 1028px)
+{
+	.select-container
+	{
+		grid-template-columns: 1fr 1fr;
+	}
+}

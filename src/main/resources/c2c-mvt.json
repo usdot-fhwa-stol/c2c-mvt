@@ -1,0 +1,42 @@
+{
+	"ngTMDD":
+	{
+		"versions":
+		{
+			"1.0" :
+			{
+				"encodings": ["UTF-8"],
+				"messageTypes": ["DMSControlRequest"],
+				"decoder": "usdot.fhwa.stol.c2c.c2c_mvt.decoders.JsonDecoder",
+				"schema": "ngTMDD/ngTMDD_Schema_v1.0.json"
+			},
+			"1.01" :
+			{
+			},
+			"1.1" :
+			{
+			},
+			"2.0" :
+			{
+			}
+		}
+	},
+	"TMDD":
+	{
+		"versions":
+		{
+			"3.03c" :
+			{
+				"encodings": ["text"]
+			},
+			"3.03d" :
+			{
+				"encodings": ["text", "Base64"]
+			},
+			"3.1" :
+			{
+				"encodings": ["text", "Hex", "Base64"]
+			} 
+		}
+	}
+}
