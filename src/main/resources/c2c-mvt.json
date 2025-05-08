@@ -8,6 +8,7 @@
 				"encodings": ["UTF-8"],
 				"messageTypes": ["DMSControlRequest"],
 				"decoder": "usdot.fhwa.stol.c2c.c2c_mvt.decoders.JsonDecoder",
+				"parser": "usdot.fhwa.stol.c2c.c2c_mvt.parsers.NGTMDDJsonParser",
 				"schema": "ngTMDD/ngTMDD_Schema_v1.0.json"
 			},
 			"1.01" :

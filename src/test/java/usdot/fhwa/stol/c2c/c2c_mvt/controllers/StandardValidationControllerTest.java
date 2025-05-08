@@ -18,6 +18,8 @@ package usdot.fhwa.stol.c2c.c2c_mvt.controllers;
 import java.nio.charset.StandardCharsets;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -164,6 +166,24 @@ class StandardValidationControllerTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getHeaders().getContentType().toString()).isEqualTo("application/octet-stream");
+    }
+
+
+    @Test
+    void testValidateMessages_NoExceptionThrown() {
+        // Arrange
+        String jsonString = "{\"key1\":\"value1\",\"key2\":\"value2\",\"key3\":\"value3\"}";
+        byte[] messageBytes = jsonString.getBytes(StandardCharsets.UTF_8);
+        String fileExt = ".json";
+        String standard = "ngTMDD";
+        String version = "1.0";
+        String encoding = "UTF-8";
+        String selectedMessageType = "DMSControlRequest";
+
+        // Act & Assert
+        assertDoesNotThrow(() -> {
+            controller.validateMessages(messageBytes, fileExt, standard, version, encoding, selectedMessageType);
+        });
     }
 
 }
