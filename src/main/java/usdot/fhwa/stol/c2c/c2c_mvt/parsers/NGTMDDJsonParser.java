@@ -27,20 +27,20 @@ import usdot.fhwa.stol.c2c.c2c_mvt.messages.JsonC2CMessage;
  */
 public class NGTMDDJsonParser extends JsonParser
 {
-    /**
-     * Call this only if the user selects "Auto Detect" for the message type. If
+	/**
+	 * Call this only if the user selects "Auto Detect" for the message type. If
 	 * the user selects a specific message type then the message type is already
 	 * identified.
-     * 
-     * @param decodedMessage the decoded message that needs its message type identified
-     * @return the message type as a String
-     * @throws C2CMVTException
-     */
-    @Override
-    public String identifyMessageType(JsonC2CMessage decodedMessage) throws C2CMVTException
-    {
-        // Need to implement this once we know more about the ngTMDD message format
-        // For now, just throw an exception to indicate that this method needs to be implemented
-        throw new C2CMVTException(new Exception("Failed to identify message type"), "Failed to identify message type");
-    }
+	 * 
+	 * @param decodedMessage the decoded message that needs its message type identified
+	 * @return the message type as a String
+	 * @throws C2CMVTException
+	 */
+	@Override
+	public String identifyMessageType(JsonC2CMessage decodedMessage) throws C2CMVTException
+	{
+		// Need to implement this once we know more about the ngTMDD message format
+		// For now, just throw an exception to indicate that this method needs to be implemented
+		throw new C2CMVTException(new Exception("Failed to identify message type"), "Failed to identify message type");
+	}
 }
