@@ -581,12 +581,20 @@ public class StandardValidationController
 	}
 
 
+	/**
+	 * Creates a new instance of the Decoder for the given C2C standard and version
+	 * @param standard name of the C2C standard
+	 * @param version version of the C2C standard
+	 * @return a new instance of the Decoder for the given C2C standard and version
+	 * @throws C2CMVTException if an error occurs while creating the Decoder instance
+	 */
+	@SuppressWarnings("unchecked")
 	private Decoder<C2CMessage> getNewDecoder(String standard, String version) throws C2CMVTException
 	{
 		try
 		{
 			String decoderClass = c2CStandards.get(standard).requireObject().get("versions").requireObject().get(version).requireObject().get("decoder").requireString().getValue();
-			return (Decoder)Class.forName(decoderClass).getDeclaredConstructor().newInstance();
+			return (Decoder<C2CMessage>)Class.forName(decoderClass).getDeclaredConstructor().newInstance();
 		}
 		catch (Exception ex)
 		{
@@ -594,13 +602,20 @@ public class StandardValidationController
 		}
 	}
 
-
+	/**
+	 * Creates a new instance of the Parser for the given C2C standard and version
+	 * @param standard name of the C2C standard
+	 * @param version version of the C2C standard
+	 * @return a new instance of the Parser for the given C2C standard and version
+	 * @throws C2CMVTException if an error occurs while creating the Parser instance
+	 */
+	@SuppressWarnings("unchecked")
 	private Parser<C2CMessage> getNewParser(String standard, String version) throws C2CMVTException
 	{
 		try
 		{
 			String parserClass = c2CStandards.get(standard).requireObject().get("versions").requireObject().get(version).requireObject().get("parser").requireString().getValue();
-			return (Parser)Class.forName(parserClass).getDeclaredConstructor().newInstance();
+			return (Parser<C2CMessage>)Class.forName(parserClass).getDeclaredConstructor().newInstance();
 		}
 		catch (Exception ex)
 		{
