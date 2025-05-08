@@ -33,8 +33,6 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 /**
  * Unit tests for StandardValidationController
  * 
@@ -51,8 +49,7 @@ class StandardValidationControllerTest {
 
 
     private final RestTemplate restTemplate = new RestTemplate();
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
+    
     @Test
     void contextLoads() {
         assertThat(controller).isNotNull();
