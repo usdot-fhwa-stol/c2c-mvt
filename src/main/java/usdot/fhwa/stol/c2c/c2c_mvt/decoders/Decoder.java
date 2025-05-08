@@ -17,6 +17,7 @@ package usdot.fhwa.stol.c2c.c2c_mvt.decoders;
 
 import java.util.ArrayList;
 import usdot.fhwa.stol.c2c.c2c_mvt.C2CMVTException;
+import usdot.fhwa.stol.c2c.c2c_mvt.controllers.StandardValidationController;
 import usdot.fhwa.stol.c2c.c2c_mvt.messages.C2CMessage;
 
 /**
@@ -24,9 +25,12 @@ import usdot.fhwa.stol.c2c.c2c_mvt.messages.C2CMessage;
  * of the functions throw a {@link C2CMVTException} to allow all of the Exception
  * handling and logging to be taken care of by {@link StandardValidationController}
  * 
+ * @param <T> A child class of C2CMessage specific to the data format of the
+ * C2C Standard that is being testing against.
+ * 
  * @author Aaron Cherney
  */
-public abstract class Decoder 
+public abstract class Decoder<T extends C2CMessage>
 {	
 	/**
 	 * Name of the encoding that needs to be decoded
@@ -60,7 +64,7 @@ public abstract class Decoder
 	 * syntax
 	 * @throws C2CMVTException
 	 */
-	public abstract <T extends C2CMessage> T checkSyntax(byte[] messageBytes) throws C2CMVTException;
+	public abstract T checkSyntax(byte[] messageBytes) throws C2CMVTException;
 	
 	/**
 	 * @return the name of encoding used for this Decoder
