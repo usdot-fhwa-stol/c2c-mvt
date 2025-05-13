@@ -545,11 +545,6 @@ public class StandardValidationController
 						throw new C2CMVTException(ex, String.format("Failed to save message to disk for message %d of %d", msgNum, msgTotal));
 					}
 					C2CMessage decodedMsg = decoder.checkSyntax(msgBytes);
-					// for testing only
-					{
-						addLogRecord(decodedMsg.toString(), uuidAsString);
-					}
-					// remove before release
 					Parser<C2CMessage> parser = getNewParser(standard, version);
 					String msgType = selectedMessageType;
 					if (msgType.toLowerCase().compareTo("auto detect") == 0)
