@@ -39,6 +39,7 @@ public class NGTMDDJsonParser extends JsonParser
 	@Override
 	public String identifyMessageType(JsonC2CMessage decodedMessage) throws C2CMVTException
 	{
+		// TODO: Implement logic to identify the message type based on the contents of the decodedMessage
 		// Need to implement this once we know more about the ngTMDD message format
 		// For now, just throw an exception to indicate that this method needs to be implemented
 		throw new C2CMVTException(new Exception("Failed to identify message type"), "Failed to identify message type");
