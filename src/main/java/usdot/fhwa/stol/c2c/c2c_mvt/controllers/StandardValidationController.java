@@ -57,7 +57,7 @@ import org.springframework.web.multipart.MultipartFile;
 import usdot.fhwa.stol.c2c.c2c_mvt.C2CMVTException;
 import usdot.fhwa.stol.c2c.c2c_mvt.C2CMVTApplication;
 import usdot.fhwa.stol.c2c.c2c_mvt.decoders.Decoder;
-import usdot.fhwa.stol.c2c.c2c_mvt.messages.C2CMessage;
+import usdot.fhwa.stol.c2c.c2c_mvt.messages.C2CBaseMessage;
 import usdot.fhwa.stol.c2c.c2c_mvt.parsers.Parser;
 
 /**
@@ -522,7 +522,7 @@ public class StandardValidationController
 		String uuidAsString = null;
 		try
 		{
-			Decoder<C2CMessage> decoder = getDecoderInstance(standard, version);
+			Decoder<C2CBaseMessage> decoder = getDecoderInstance(standard, version);
 			decoder.setEncoding(encoding);
 			if (!decoder.checkSecurity(messageBytes))
 				throw new C2CMVTException(new Exception("Found possible security threat. Did not attempt validation."), null);
@@ -544,8 +544,8 @@ public class StandardValidationController
 					{
 						throw new C2CMVTException(ex, String.format("Failed to save message to disk for message %d of %d", msgNum, msgTotal));
 					}
-					C2CMessage decodedMsg = decoder.checkSyntax(msgBytes);
-					Parser<C2CMessage> parser = getParserInstance(standard, version);
+					C2CBaseMessage decodedMsg = decoder.checkSyntax(msgBytes);
+					Parser<C2CBaseMessage> parser = getParserInstance(standard, version);
 					String msgType = selectedMessageType;
 					if (msgType.toLowerCase().compareTo("auto detect") == 0)
 						msgType = parser.identifyMessageType(decodedMsg);
@@ -584,12 +584,12 @@ public class StandardValidationController
 	 * @throws C2CMVTException if an error occurs while creating the Decoder instance
 	 */
 	@SuppressWarnings("unchecked")
-	private Decoder<C2CMessage> getDecoderInstance(String standard, String version) throws C2CMVTException
+	private Decoder<C2CBaseMessage> getDecoderInstance(String standard, String version) throws C2CMVTException
 	{
 		try
 		{
 			String decoderClass = c2CStandards.get(standard).requireObject().get("versions").requireObject().get(version).requireObject().get("decoder").requireString().getValue();
-			return (Decoder<C2CMessage>)Class.forName(decoderClass).getDeclaredConstructor().newInstance();
+			return (Decoder<C2CBaseMessage>)Class.forName(decoderClass).getDeclaredConstructor().newInstance();
 		}
 		catch (Exception ex)
 		{
@@ -605,12 +605,12 @@ public class StandardValidationController
 	 * @throws C2CMVTException if an error occurs while creating the Parser instance
 	 */
 	@SuppressWarnings("unchecked")
-	private Parser<C2CMessage> getParserInstance(String standard, String version) throws C2CMVTException
+	private Parser<C2CBaseMessage> getParserInstance(String standard, String version) throws C2CMVTException
 	{
 		try
 		{
 			String parserClass = c2CStandards.get(standard).requireObject().get("versions").requireObject().get(version).requireObject().get("parser").requireString().getValue();
-			return (Parser<C2CMessage>)Class.forName(parserClass).getDeclaredConstructor().newInstance();
+			return (Parser<C2CBaseMessage>)Class.forName(parserClass).getDeclaredConstructor().newInstance();
 		}
 		catch (Exception ex)
 		{
