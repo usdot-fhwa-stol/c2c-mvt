@@ -522,7 +522,7 @@ public class StandardValidationController
 		String uuidAsString = null;
 		try
 		{
-			Decoder<C2CMessage> decoder = getNewDecoder(standard, version);
+			Decoder<C2CMessage> decoder = getDecoderInstance(standard, version);
 			decoder.setEncoding(encoding);
 			if (!decoder.checkSecurity(messageBytes))
 				throw new C2CMVTException(new Exception("Found possible security threat. Did not attempt validation."), null);
@@ -545,7 +545,7 @@ public class StandardValidationController
 						throw new C2CMVTException(ex, String.format("Failed to save message to disk for message %d of %d", msgNum, msgTotal));
 					}
 					C2CMessage decodedMsg = decoder.checkSyntax(msgBytes);
-					Parser<C2CMessage> parser = getNewParser(standard, version);
+					Parser<C2CMessage> parser = getParserInstance(standard, version);
 					String msgType = selectedMessageType;
 					if (msgType.toLowerCase().compareTo("auto detect") == 0)
 						msgType = parser.identifyMessageType(decodedMsg);
@@ -584,7 +584,7 @@ public class StandardValidationController
 	 * @throws C2CMVTException if an error occurs while creating the Decoder instance
 	 */
 	@SuppressWarnings("unchecked")
-	private Decoder<C2CMessage> getNewDecoder(String standard, String version) throws C2CMVTException
+	private Decoder<C2CMessage> getDecoderInstance(String standard, String version) throws C2CMVTException
 	{
 		try
 		{
@@ -605,7 +605,7 @@ public class StandardValidationController
 	 * @throws C2CMVTException if an error occurs while creating the Parser instance
 	 */
 	@SuppressWarnings("unchecked")
-	private Parser<C2CMessage> getNewParser(String standard, String version) throws C2CMVTException
+	private Parser<C2CMessage> getParserInstance(String standard, String version) throws C2CMVTException
 	{
 		try
 		{
