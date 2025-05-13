@@ -100,7 +100,7 @@ public class StandardValidationController
 	 * In memory log used for storing messages related to validation that will 
 	 * be sent to the client
 	 */
-	private static final ArrayList<String> VALIDATION_RECORDS = new ArrayList();
+	private static final ArrayList<String> VALIDATION_RECORDS = new ArrayList<>();
 
 	
 	/**
