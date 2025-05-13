@@ -20,7 +20,7 @@ package usdot.fhwa.stol.c2c.c2c_mvt.messages;
  * 
  * @author Aaron Cherney
  */
-public class C2CMessage 
+public class C2CBaseMessage 
 {
 	/**
 	 * Representation of the message as bytes
@@ -32,7 +32,7 @@ public class C2CMessage
 	 * Constructor. Sets {@link #messageBytes}
 	 * @param messageBytes The message in bytes
 	 */
-	public C2CMessage(byte[] messageBytes)
+	public C2CBaseMessage(byte[] messageBytes)
 	{
 		this.messageBytes = messageBytes;
 	}

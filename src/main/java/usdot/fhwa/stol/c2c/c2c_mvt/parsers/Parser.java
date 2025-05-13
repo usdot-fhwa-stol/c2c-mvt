@@ -18,19 +18,19 @@ package usdot.fhwa.stol.c2c.c2c_mvt.parsers;
 
 import usdot.fhwa.stol.c2c.c2c_mvt.C2CMVTException;
 import usdot.fhwa.stol.c2c.c2c_mvt.controllers.StandardValidationController;
-import usdot.fhwa.stol.c2c.c2c_mvt.messages.C2CMessage;
+import usdot.fhwa.stol.c2c.c2c_mvt.messages.C2CBaseMessage;
 
 /**
  * Base class that defines the interfaces and common variables for Parsers.All
  * of the functions throw a {@link C2CMVTException} to allow all of the Exception
  * handling and logging to be taken care of by {@link StandardValidationController}
  * 
- * @param <T> A child class of C2CMessage specific to the data format of the
+ * @param <T> A child class of {@link C2CBaseMessage} specific to the data format of the
  * C2C Standard that is being testing against.
  * 
  * @author Aaron Cherney
  */
-public abstract class Parser<T extends C2CMessage>
+public abstract class Parser<T extends C2CBaseMessage>
 {
 	/**
 	 * Parses the decoded message (if necessary) to read the information contained
