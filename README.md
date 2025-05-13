@@ -1,5 +1,5 @@
 # Center-To-Center Message Validation Tool
-The Center-To-Center Message Validation Tool (C2C-MVT) is an application used to test messages defined by a C2C Standard conform to the data format specified by the standard. The intent is to use common interfaces and methods to be able to valid messages for many C2C Standards. The first standard being implemented is the Next Generation Traffic Management Data Dictionary (ngTMDD).
+The Center-To-Center Message Validation Tool (C2C-MVT) is an application used to test whether or not messages defined by a C2C Standard conform to the data format specified by the standard. The intent is to use common interfaces and methods to be able to validate messages for many C2C Standards. The first standard being implemented is the Next Generation Traffic Management Data Dictionary (ngTMDD).
 
 ## Developer Instructions
 Clone the repository and create a Maven project using your IDE of choice. The embedded webserver runs on port 3116 by default. To change this port edit the server.port properties in the c2c-mvt\src\resources\application.properties file.
