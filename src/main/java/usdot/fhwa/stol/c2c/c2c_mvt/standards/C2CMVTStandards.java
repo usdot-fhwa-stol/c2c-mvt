@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2025 LEIDOS.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package usdot.fhwa.stol.c2c.c2c_mvt.standards;
 
 import java.io.InputStream;
@@ -25,6 +40,44 @@ import usdot.fhwa.stol.c2c.c2c_mvt.parsers.Parser;
  * This class reads the c2c-mvt.json file and stores the information in memory.
  * It provides methods to retrieve the list of C2C standards, versions, encodings, and message types.
  * It also provides methods to create instances of the Decoder, Parser, and Validator classes for the specified C2C standard and version.
+ * The structure of the configuration file is a JSON Object as follows:
+ * {
+ * 	"standardName1": {
+ * 		"versions": {
+ * 			"versionName1": {
+ * 				"encodings": ["encoding1", "encoding2"],
+ * 				"messageTypes": ["messageType1", "messageType2"],
+ * 				"decoderFQN": "DecoderClass",
+ * 				"parserFQN": "ParserClass",
+ * 				"validatorFQN": "ValidatorClass",
+ * 			    "schemaFile": "schema1.json"
+ * 			},
+ * 			"versionName2": {
+ * 				"encodings": ["encoding3"],
+ * 				"messageTypes": [],
+ * 				"decoderFQN": "DecoderClass",
+ * 				"parserFQN": "ParserClass",
+ * 				"validatorFQN": "ValidatorClass",
+ * 			    "schemaFile": "schema2.json"
+ * 			}
+ * 		}
+ * 	},
+ * 	"standardName2": {
+ * 		"versions": {
+ * 			"versionName1": {
+ * 				"encodings": ["encoding4"],
+ * 				"messageTypes": ["messageType3"],
+ * 				"decoderFQN": "DecoderClass",
+ * 				"parserFQN": "ParserClass",
+ * 				"validatorFQN": "ValidatorClass",
+ * 			    "schemaFile": "schema3.json"
+ * 			}
+ * 		}
+ * 	}
+ * }
+ * The Decoder class must be in the usdot.fhwa.stol.c2c.c2c_mvt.decoders package.
+ * The Parser class must be in the usdot.fhwa.stol.c2c.c2c_mvt.parsers package.
+ * The Validator class must be in the usdot.fhwa.stol.c2c.c2c_mvt.validators package.
  */
 public class C2CMVTStandards 
 {
@@ -36,6 +89,7 @@ public class C2CMVTStandards
 
 	/**
 	 * Constructor that reads the C2C MVT configuration file and initializes the C2C standards.
+	 *
 	 * @param resource the ClassPathResource representing the C2C MVT configuration file
 	 * @throws C2CMVTException if an error occurs while reading the configuration file
 	 */
