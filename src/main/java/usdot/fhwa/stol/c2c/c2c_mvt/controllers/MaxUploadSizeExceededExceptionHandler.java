@@ -44,7 +44,7 @@ public class MaxUploadSizeExceededExceptionHandler
 	 * HashSet used to determine if multiple parts of a file upload request are
 	 * for the same file. Stores the last modified time stamp of the request
 	 */
-	public final static HashSet<Long> requestTimes = new HashSet();
+	public final static HashSet<Long> requestTimes = new HashSet<>();
 
 	/**
 	 * This method handles {@link MaxUploadSizeExceededExpection}s by logging

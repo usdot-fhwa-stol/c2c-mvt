@@ -17,16 +17,20 @@ package usdot.fhwa.stol.c2c.c2c_mvt.decoders;
 
 import java.util.ArrayList;
 import usdot.fhwa.stol.c2c.c2c_mvt.C2CMVTException;
-import usdot.fhwa.stol.c2c.c2c_mvt.messages.C2CMessage;
+import usdot.fhwa.stol.c2c.c2c_mvt.controllers.StandardValidationController;
+import usdot.fhwa.stol.c2c.c2c_mvt.messages.C2CBaseMessage;
 
 /**
  * Base class that defines the interfaces and common variables for Decoders. All
  * of the functions throw a {@link C2CMVTException} to allow all of the Exception
  * handling and logging to be taken care of by {@link StandardValidationController}
  * 
+ * @param <T> A child class of {@link C2CBaseMessage} specific to the data format of the
+ * C2C Standard that is being testing against.
+ * 
  * @author Aaron Cherney
  */
-public abstract class Decoder 
+public abstract class Decoder<T extends C2CBaseMessage>
 {	
 	/**
 	 * Name of the encoding that needs to be decoded
@@ -52,15 +56,15 @@ public abstract class Decoder
 	
 	/**
 	 * Ensures the message has the expected syntax and creates the appropriate
-	 * {@link C2CMessage}. Throws a C2CMVTException if the syntax is not valid.
-	 * @param <T> The type of {@link C2CMessage} the Decoder creates, for example
+	 * {@link C2CBaseMessage}. Throws a C2CMVTException if the syntax is not valid.
+	 * @param <T> The type of {@link C2CBaseMessage} the Decoder creates, for example
 	 * messages in Json format would return a {@Link JsonC2CMessage}
 	 * @param messageBytes the message in bytes
-	 * @return the {@link C2CMessage} wrapping the message if it has the correct
+	 * @return the {@link C2CBaseMessage} wrapping the message if it has the correct
 	 * syntax
 	 * @throws C2CMVTException
 	 */
-	public abstract <T extends C2CMessage> T checkSyntax(byte[] messageBytes) throws C2CMVTException;
+	public abstract T checkSyntax(byte[] messageBytes) throws C2CMVTException;
 	
 	/**
 	 * @return the name of encoding used for this Decoder

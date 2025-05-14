@@ -57,7 +57,8 @@ import org.springframework.web.multipart.MultipartFile;
 import usdot.fhwa.stol.c2c.c2c_mvt.C2CMVTException;
 import usdot.fhwa.stol.c2c.c2c_mvt.C2CMVTApplication;
 import usdot.fhwa.stol.c2c.c2c_mvt.decoders.Decoder;
-import usdot.fhwa.stol.c2c.c2c_mvt.messages.C2CMessage;
+import usdot.fhwa.stol.c2c.c2c_mvt.messages.C2CBaseMessage;
+import usdot.fhwa.stol.c2c.c2c_mvt.parsers.Parser;
 
 /**
  * This is the main class/controller of the application. It handles all of the user
@@ -99,7 +100,7 @@ public class StandardValidationController
 	 * In memory log used for storing messages related to validation that will 
 	 * be sent to the client
 	 */
-	private static final ArrayList<String> VALIDATION_RECORDS = new ArrayList();
+	private static final ArrayList<String> VALIDATION_RECORDS = new ArrayList<>();
 
 	
 	/**
@@ -507,70 +508,59 @@ public class StandardValidationController
 	/**
 	 * Validates the given payload by instantiating the configured Decoder, Parser,
 	 * and Validator for the given C2C standard, version, encoding, and message
-	 * type.
+	 * type. The method is package private so that it can be called from the test classes.
 	 * @param messageBytes messages to validate
 	 * @param fileExt file extension of the uploaded file
 	 * @param standard name of the C2C standard
 	 * @param version version of the C2C standard
 	 * @param encoding encoding used for the message
-	 * @param messageType the type of message being validated, if known and necessary
+	 * @param selectedMessageType the type of message being validated, if known and necessary
 	 * to validate
 	 */
-	private void validateMessages(byte[] messageBytes, String fileExt, String standard, String version, String encoding, String messageType)
+	void validateMessages(byte[] messageBytes, String fileExt, String standard, String version, String encoding, String selectedMessageType)
 	{
-		Decoder decoder = null;
 		String uuidAsString = null;
 		try
 		{
-			try
+			Decoder<C2CBaseMessage> decoder = getDecoderInstance(standard, version);
+			decoder.setEncoding(encoding);
+			if (!decoder.checkSecurity(messageBytes))
+				throw new C2CMVTException(new Exception("Found possible security threat. Did not attempt validation."), null);
+			ArrayList<byte[]> separatedMessages = decoder.separateMessages(messageBytes);
+			int msgTotal = separatedMessages.size();
+			int msgNum = 1;
+			for (byte[] msgBytes : separatedMessages)
 			{
-				String decoderClass = c2CStandards.get(standard).requireObject().get("versions").requireObject().get(version).requireObject().get("decoder").requireString().getValue();
-				decoder = (Decoder)Class.forName(decoderClass).getDeclaredConstructor().newInstance();
-			}
-			catch (Exception ex)
-			{
-				throw new C2CMVTException(ex, String.format("Failed to instantiate decoder for version %s of standard %s", version, standard));
-			}
-			if (decoder != null)
-			{
-				decoder.setEncoding(encoding);
-				if (!decoder.checkSecurity(messageBytes))
-					throw new C2CMVTException(new Exception("Found possible security threat. Did not attempt validation."), null);
-				ArrayList<byte[]> separatedMessages = decoder.separateMessages(messageBytes);
-				int msgTotal = separatedMessages.size();
-				int msgNum = 1;
-				for (byte[] msgBytes : separatedMessages)
+				try
 				{
-					try
+					UUID uuid = UUID.randomUUID();
+					uuidAsString = uuid.toString();
+					String filename = uuid.toString() + fileExt;
+					try (BufferedOutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(Path.of(workingDirectory, FILE_DIR, filename))))
 					{
-						UUID uuid = UUID.randomUUID();
-						uuidAsString = uuid.toString();
-						String filename = uuid.toString() + fileExt;
-						try (BufferedOutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(Path.of(workingDirectory, FILE_DIR, filename))))
-						{
-							outputStream.write(msgBytes);
-						}
-						catch (IOException ex)
-						{
-							throw new C2CMVTException(ex, String.format("Failed to save message to disk for message %d of %d", msgNum, msgTotal));
-						}
-						C2CMessage decodedMsg = decoder.checkSyntax(msgBytes);
-						// for testing only
-						{
-							addLogRecord(decodedMsg.toString(), uuidAsString);
-						}
-						// remove before release
-						addLogRecord(String.format("Validation completed with no errors for message %d of %d", msgNum, msgTotal), uuidAsString);
+						outputStream.write(msgBytes);
 					}
-					catch (C2CMVTException ex)
+					catch (IOException ex)
 					{
-						addLogRecord(String.format("Validation completed with errors for message %d of %d", msgNum, msgTotal), uuidAsString);
-						logException(LOGGER, ex.originalException, ex.additionalMessage, uuidAsString);
+						throw new C2CMVTException(ex, String.format("Failed to save message to disk for message %d of %d", msgNum, msgTotal));
 					}
-					finally
-					{
-						++msgNum;
-					}
+					C2CBaseMessage decodedMsg = decoder.checkSyntax(msgBytes);
+					Parser<C2CBaseMessage> parser = getParserInstance(standard, version);
+					String msgType = selectedMessageType;
+					if (msgType.toLowerCase().compareTo("auto detect") == 0)
+						msgType = parser.identifyMessageType(decodedMsg);
+
+					parser.parseMessage(decodedMsg);
+					addLogRecord(String.format("Validation completed with no errors for message %d of %d", msgNum, msgTotal), uuidAsString);
+				}
+				catch (C2CMVTException ex)
+				{
+					addLogRecord(String.format("Validation completed with errors for message %d of %d", msgNum, msgTotal), uuidAsString);
+					logException(LOGGER, ex.originalException, ex.additionalMessage, uuidAsString);
+				}
+				finally
+				{
+					++msgNum;
 				}
 			}
 		}
@@ -582,6 +572,49 @@ public class StandardValidationController
 		finally
 		{
 			validationInProgress.set(false);
+		}
+	}
+
+
+	/**
+	 * Creates a new instance of the Decoder for the given C2C standard and version
+	 * @param standard name of the C2C standard
+	 * @param version version of the C2C standard
+	 * @return a new instance of the Decoder for the given C2C standard and version
+	 * @throws C2CMVTException if an error occurs while creating the Decoder instance
+	 */
+	@SuppressWarnings("unchecked")
+	private Decoder<C2CBaseMessage> getDecoderInstance(String standard, String version) throws C2CMVTException
+	{
+		try
+		{
+			String decoderClass = c2CStandards.get(standard).requireObject().get("versions").requireObject().get(version).requireObject().get("decoder").requireString().getValue();
+			return (Decoder<C2CBaseMessage>)Class.forName(decoderClass).getDeclaredConstructor().newInstance();
+		}
+		catch (Exception ex)
+		{
+			throw new C2CMVTException(ex, String.format("Failed to instantiate decoder for version %s of standard %s", version, standard));
+		}
+	}
+
+	/**
+	 * Creates a new instance of the Parser for the given C2C standard and version
+	 * @param standard name of the C2C standard
+	 * @param version version of the C2C standard
+	 * @return a new instance of the Parser for the given C2C standard and version
+	 * @throws C2CMVTException if an error occurs while creating the Parser instance
+	 */
+	@SuppressWarnings("unchecked")
+	private Parser<C2CBaseMessage> getParserInstance(String standard, String version) throws C2CMVTException
+	{
+		try
+		{
+			String parserClass = c2CStandards.get(standard).requireObject().get("versions").requireObject().get(version).requireObject().get("parser").requireString().getValue();
+			return (Parser<C2CBaseMessage>)Class.forName(parserClass).getDeclaredConstructor().newInstance();
+		}
+		catch (Exception ex)
+		{
+			throw new C2CMVTException(ex, String.format("Failed to instantiate parser for version %s of standard %s", version, standard));
 		}
 	}
 	

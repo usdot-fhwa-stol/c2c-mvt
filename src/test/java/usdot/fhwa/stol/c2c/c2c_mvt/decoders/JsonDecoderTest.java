@@ -33,97 +33,97 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  */
 class JsonDecoderTest {
 
-    private JsonDecoder jsonDecoder;
+	private JsonDecoder jsonDecoder;
 
-    @BeforeEach
-    void setUp() {
-        jsonDecoder = new JsonDecoder();
-        jsonDecoder.setEncoding(StandardCharsets.UTF_8.name());
-    }
+	@BeforeEach
+	void setUp() {
+		jsonDecoder = new JsonDecoder();
+		jsonDecoder.setEncoding(StandardCharsets.UTF_8.name());
+	}
 
-    @Test
-    void testSeparateMessages_ValidJsonArray() throws Exception {
-        String json = "{\"key1\":\"value1\"},{\"key2\":\"value2\"}";
-        ArrayList<byte[]> messages = jsonDecoder.separateMessages(json.getBytes(StandardCharsets.UTF_8));
+	@Test
+	void testSeparateMessages_ValidJsonArray() throws Exception {
+		String json = "{\"key1\":\"value1\"},{\"key2\":\"value2\"}";
+		ArrayList<byte[]> messages = jsonDecoder.separateMessages(json.getBytes(StandardCharsets.UTF_8));
 
-        assertThat(messages).hasSize(2);
-        assertThat(new String(messages.get(0), StandardCharsets.UTF_8)).isEqualTo("{\"key1\":\"value1\"}");
-        assertThat(new String(messages.get(1), StandardCharsets.UTF_8)).isEqualTo("{\"key2\":\"value2\"}");
-    }
+		assertThat(messages).hasSize(2);
+		assertThat(new String(messages.get(0), StandardCharsets.UTF_8)).isEqualTo("{\"key1\":\"value1\"}");
+		assertThat(new String(messages.get(1), StandardCharsets.UTF_8)).isEqualTo("{\"key2\":\"value2\"}");
+	}
 
-    @Test
-    void testSeparateMessages_ValidJsonObject() throws Exception {
-        String json = "{\"key\":\"value\"}";
-        ArrayList<byte[]> messages = jsonDecoder.separateMessages(json.getBytes(StandardCharsets.UTF_8));
+	@Test
+	void testSeparateMessages_ValidJsonObject() throws Exception {
+		String json = "{\"key\":\"value\"}";
+		ArrayList<byte[]> messages = jsonDecoder.separateMessages(json.getBytes(StandardCharsets.UTF_8));
 
-        assertThat(messages).hasSize(1);
-        assertThat(new String(messages.get(0), StandardCharsets.UTF_8)).isEqualTo(json);
-    }
+		assertThat(messages).hasSize(1);
+		assertThat(new String(messages.get(0), StandardCharsets.UTF_8)).isEqualTo(json);
+	}
 
-    @Test
-    void testSeparateMessages_InvalidJsonThrowsException() {
-        String invalidJson = "{\"key\":\"value\""; // Missing closing brace
+	@Test
+	void testSeparateMessages_InvalidJsonThrowsException() {
+		String invalidJson = "{\"key\":\"value\""; // Missing closing brace
 
-        C2CMVTException exception = assertThrows(C2CMVTException.class, () -> {
-            jsonDecoder.separateMessages(invalidJson.getBytes(StandardCharsets.UTF_8));
-        });
+		C2CMVTException exception = assertThrows(C2CMVTException.class, () -> {
+			jsonDecoder.separateMessages(invalidJson.getBytes(StandardCharsets.UTF_8));
+		});
 
-        assertThat(exception.getMessage()).contains("Error occured in separateMessage()");
-    }
+		assertThat(exception.getMessage()).contains("Error occured in separateMessage()");
+	}
 
-    @Test
-    void testSeparateMessages_EmptyInput() throws Exception {
-        String emptyJson = "";
-        ArrayList<byte[]> messages = jsonDecoder.separateMessages(emptyJson.getBytes(StandardCharsets.UTF_8));
+	@Test
+	void testSeparateMessages_EmptyInput() throws Exception {
+		String emptyJson = "";
+		ArrayList<byte[]> messages = jsonDecoder.separateMessages(emptyJson.getBytes(StandardCharsets.UTF_8));
 
-        assertThat(messages).isEmpty();
-    }
+		assertThat(messages).isEmpty();
+	}
 
-    @Test
-    void testCheckSecurity_AlwaysReturnsTrue() throws Exception {
-        String json = "{\"key\":\"value\"}";
-        boolean result = jsonDecoder.checkSecurity(json.getBytes(StandardCharsets.UTF_8));
+	@Test
+	void testCheckSecurity_AlwaysReturnsTrue() throws Exception {
+		String json = "{\"key\":\"value\"}";
+		boolean result = jsonDecoder.checkSecurity(json.getBytes(StandardCharsets.UTF_8));
 
-        assertThat(result).isTrue();
-    }
+		assertThat(result).isTrue();
+	}
 
-    @Test
-    void testCheckSyntax_ValidJson() throws Exception {
-        String json = "{\"key\":\"value\"}";
-        JsonC2CMessage message = jsonDecoder.checkSyntax(json.getBytes(StandardCharsets.UTF_8));
+	@Test
+	void testCheckSyntax_ValidJson() throws Exception {
+		String json = "{\"key\":\"value\"}";
+		JsonC2CMessage message = jsonDecoder.checkSyntax(json.getBytes(StandardCharsets.UTF_8));
 
-        assertThat(message).isNotNull();
-        assertThat(new String(message.getBytes(), StandardCharsets.UTF_8)).isEqualTo(json);
-    }
+		assertThat(message).isNotNull();
+		assertThat(new String(message.getBytes(), StandardCharsets.UTF_8)).isEqualTo(json);
+	}
 
-    @Test
-    void testCheckSyntax_InvalidJsonThrowsException() {
-        String invalidJson = "{\"key\":\"value\""; // Missing closing brace
+	@Test
+	void testCheckSyntax_InvalidJsonThrowsException() {
+		String invalidJson = "{\"key\":\"value\""; // Missing closing brace
 
-        C2CMVTException exception = assertThrows(C2CMVTException.class, () -> {
-            jsonDecoder.checkSyntax(invalidJson.getBytes(StandardCharsets.UTF_8));
-        });
+		C2CMVTException exception = assertThrows(C2CMVTException.class, () -> {
+			jsonDecoder.checkSyntax(invalidJson.getBytes(StandardCharsets.UTF_8));
+		});
 
-        assertThat(exception.getMessage()).contains("Invalid JSON Syntax");
-    }
+		assertThat(exception.getMessage()).contains("Invalid JSON Syntax");
+	}
 
-    @Test
-    void testCheckSyntax_EmptyInputThrowsException() {
-        String emptyJson = "";
+	@Test
+	void testCheckSyntax_EmptyInputThrowsException() {
+		String emptyJson = "";
 
-        C2CMVTException exception = assertThrows(C2CMVTException.class, () -> {
-            jsonDecoder.checkSyntax(emptyJson.getBytes(StandardCharsets.UTF_8));
-        });
+		C2CMVTException exception = assertThrows(C2CMVTException.class, () -> {
+			jsonDecoder.checkSyntax(emptyJson.getBytes(StandardCharsets.UTF_8));
+		});
 
-        assertThat(exception.getMessage()).contains("Invalid JSON Syntax");
-    }
+		assertThat(exception.getMessage()).contains("Invalid JSON Syntax");
+	}
 
-    @Test
-    void testSeparateMessages_WithBOM() throws Exception {
-        byte[] jsonWithBOM = new byte[] {(byte) 0xEF, (byte) 0xBB, (byte) 0xBF, '{', '"', 'k', 'e', 'y', '"', ':', '"', 'v', 'a', 'l', 'u', 'e', '"', '}'};
-        ArrayList<byte[]> messages = jsonDecoder.separateMessages(jsonWithBOM);
+	@Test
+	void testSeparateMessages_WithBOM() throws Exception {
+		byte[] jsonWithBOM = new byte[] {(byte) 0xEF, (byte) 0xBB, (byte) 0xBF, '{', '"', 'k', 'e', 'y', '"', ':', '"', 'v', 'a', 'l', 'u', 'e', '"', '}'};
+		ArrayList<byte[]> messages = jsonDecoder.separateMessages(jsonWithBOM);
 
-        assertThat(messages).hasSize(1);
-        assertThat(new String(messages.get(0), StandardCharsets.UTF_8)).isEqualTo("{\"key\":\"value\"}");
-    }
+		assertThat(messages).hasSize(1);
+		assertThat(new String(messages.get(0), StandardCharsets.UTF_8)).isEqualTo("{\"key\":\"value\"}");
+	}
 }

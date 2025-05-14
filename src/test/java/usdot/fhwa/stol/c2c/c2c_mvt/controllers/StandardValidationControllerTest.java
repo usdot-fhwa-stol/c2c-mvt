@@ -18,6 +18,8 @@ package usdot.fhwa.stol.c2c.c2c_mvt.controllers;
 import java.nio.charset.StandardCharsets;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -33,8 +35,6 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 /**
  * Unit tests for StandardValidationController
  * 
@@ -43,130 +43,147 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class StandardValidationControllerTest {
 
-    @LocalServerPort
-    private int port;
+	@LocalServerPort
+	private int port;
 
-    @Autowired
-    private StandardValidationController controller;
-
-
-    private final RestTemplate restTemplate = new RestTemplate();
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
-    @Test
-    void contextLoads() {
-        assertThat(controller).isNotNull();
-    }
-
-    @Test
-    void testGetStatus_IncludeValidationRecordsTrue() {
-        String url = "http://localhost:" + port + "/status?include_validation_records=true";
-        ResponseEntity<String> response = restTemplate.postForEntity(url, null, String.class);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).contains("\"validating\":");
-    }
-
-    @Test
-    void testGetStandards_Success() {
-        String url = "http://localhost:" + port + "/standards";
-        ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotEmpty();
-    }
-
-    @Test
-    void testGetVersions_ValidStandard() {
-        String url = "http://localhost:" + port + "/versions?standard=ngTMDD";
-        try {
-            ResponseEntity<String> response = restTemplate.postForEntity(url, null, String.class);
-            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-            assertThat(response.getBody()).isNotEmpty();
-        } catch (HttpServerErrorException e) {
-            System.out.println("Body: " + e.getResponseBodyAsString());
-            throw e;
-        }
-    }
+	@Autowired
+	private StandardValidationController controller;
 
 
-    @Test
-    void testGetEncodings_ValidStandardAndVersion() {
-        String url = "http://localhost:" + port + "/encodings?standard=ngTMDD&version=1.0";
-        ResponseEntity<String> response = restTemplate.postForEntity(url, null, String.class);
-    
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).contains("UTF-8");
-    }
-    
+	private final RestTemplate restTemplate = new RestTemplate();
+	
+	@Test
+	void contextLoads() {
+		assertThat(controller).isNotNull();
+	}
 
-    @Test
-    void testGetMessageTypes_ValidStandardAndVersion() {
-        String url = "http://localhost:" + port + "/messagetypes?standard=ngTMDD&version=1.0";
-        ResponseEntity<String> response = restTemplate.postForEntity(url, null, String.class);
-    
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).contains("DMSControlRequest");
-    }
-    
+	@Test
+	void testGetStatus_IncludeValidationRecordsTrue() {
+		String url = "http://localhost:" + port + "/status?include_validation_records=true";
+		ResponseEntity<String> response = restTemplate.postForEntity(url, null, String.class);
 
-    @Test
-    void testUploadMessages_ValidFile() {
-        String url = "http://localhost:" + port + "/upload";
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(response.getBody()).contains("\"validating\":");
+	}
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+	@Test
+	void testGetStandards_Success() {
+		String url = "http://localhost:" + port + "/standards";
+		ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
 
-        String validJson = """
-        {
-        "DMSControlRequest": {
-            "requestId": "1234",
-            "dmsId": "5678",
-            "message": "Test DMS message"
-        }
-        }
-        """;
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(response.getBody()).isNotEmpty();
+	}
 
-        ByteArrayResource fileResource = new ByteArrayResource(validJson.getBytes(StandardCharsets.UTF_8)) {
-            @Override
-            public String getFilename() {
-                return "ngtmdd_test.json";
-            }
-        };
+	@Test
+	void testGetVersions_ValidStandard() {
+		String url = "http://localhost:" + port + "/versions?standard=ngTMDD";
+		try {
+			ResponseEntity<String> response = restTemplate.postForEntity(url, null, String.class);
+			assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+			assertThat(response.getBody()).isNotEmpty();
+		} catch (HttpServerErrorException e) {
+			System.out.println("Body: " + e.getResponseBodyAsString());
+			throw e;
+		}
+	}
 
-        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-        body.add("uploaded_file", fileResource);
-        body.add("standard", "ngTMDD");
-        body.add("version", "1.0");
-        body.add("encoding", "UTF-8");
-        body.add("message_type", "DMSControlRequest");
 
-        HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+	@Test
+	void testGetEncodings_ValidStandardAndVersion() {
+		String url = "http://localhost:" + port + "/encodings?standard=ngTMDD&version=1.0";
+		ResponseEntity<String> response = restTemplate.postForEntity(url, null, String.class);
+	
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(response.getBody()).contains("UTF-8");
+	}
+	
 
-        ResponseEntity<String> response = restTemplate.postForEntity(url, requestEntity, String.class);
+	@Test
+	void testGetMessageTypes_ValidStandardAndVersion() {
+		String url = "http://localhost:" + port + "/messagetypes?standard=ngTMDD&version=1.0";
+		ResponseEntity<String> response = restTemplate.postForEntity(url, null, String.class);
+	
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(response.getBody()).contains("DMSControlRequest");
+	}
+	
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).contains("Received");
-    }
+	@Test
+	void testUploadMessages_ValidFile() {
+		String url = "http://localhost:" + port + "/upload";
 
-    
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
-    @Test
-    void testResetLog_Success() {
-        String url = "http://localhost:" + port + "/resetLog";
-        ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+		String validJson = """
+		{
+		"DMSControlRequest": {
+			"requestId": "1234",
+			"dmsId": "5678",
+			"message": "Test DMS message"
+		}
+		}
+		""";
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).contains("Success");
-    }
+		ByteArrayResource fileResource = new ByteArrayResource(validJson.getBytes(StandardCharsets.UTF_8)) {
+			@Override
+			public String getFilename() {
+				return "ngtmdd_test.json";
+			}
+		};
 
-    @Test
-    void testDownloadLog_Success() {
-        String url = "http://localhost:" + port + "/downloadLog";
-        ResponseEntity<byte[]> response = restTemplate.getForEntity(url, byte[].class);
+		MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+		body.add("uploaded_file", fileResource);
+		body.add("standard", "ngTMDD");
+		body.add("version", "1.0");
+		body.add("encoding", "UTF-8");
+		body.add("message_type", "DMSControlRequest");
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getHeaders().getContentType().toString()).isEqualTo("application/octet-stream");
-    }
+		HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+
+		ResponseEntity<String> response = restTemplate.postForEntity(url, requestEntity, String.class);
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(response.getBody()).contains("Received");
+	}
+
+	
+
+	@Test
+	void testResetLog_Success() {
+		String url = "http://localhost:" + port + "/resetLog";
+		ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(response.getBody()).contains("Success");
+	}
+
+	@Test
+	void testDownloadLog_Success() {
+		String url = "http://localhost:" + port + "/downloadLog";
+		ResponseEntity<byte[]> response = restTemplate.getForEntity(url, byte[].class);
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(response.getHeaders().getContentType().toString()).isEqualTo("application/octet-stream");
+	}
+
+
+	@Test
+	void testValidateMessages_NoExceptionThrown() {
+		// Arrange
+		String jsonString = "{\"key1\":\"value1\",\"key2\":\"value2\",\"key3\":\"value3\"}";
+		byte[] messageBytes = jsonString.getBytes(StandardCharsets.UTF_8);
+		String fileExt = ".json";
+		String standard = "ngTMDD";
+		String version = "1.0";
+		String encoding = "UTF-8";
+		String selectedMessageType = "DMSControlRequest";
+
+		// Act & Assert
+		assertDoesNotThrow(() -> {
+			controller.validateMessages(messageBytes, fileExt, standard, version, encoding, selectedMessageType);
+		});
+	}
 
 }

@@ -18,11 +18,11 @@ package usdot.fhwa.stol.c2c.c2c_mvt.messages;
 import com.github.erosb.jsonsKema.JsonValue;
 
 /**
- * Implementation of {@link C2CMessage} for Json messages.
+ * Implementation of {@link C2CBaseMessage} for Json messages.
  * 
  * @author Aaron Cherney
  */
-public class JsonC2CMessage extends C2CMessage
+public class JsonC2CMessage extends C2CBaseMessage
 {
 	/**
 	 * The message represented as a JsonValue, which can be a JsonObject or
@@ -32,7 +32,7 @@ public class JsonC2CMessage extends C2CMessage
 
 	
 	/**
-	 * Constructor. Calls {@link C2CMessage#C2CMessage(byte[])}.
+	 * Constructor. Calls {@link C2CBaseMessage#C2CMessage(byte[])}.
 	 * @param messageBytes the message in bytes
 	 */
 	public JsonC2CMessage(byte[] messageBytes)

@@ -34,7 +34,7 @@ import usdot.fhwa.stol.c2c.c2c_mvt.messages.JsonC2CMessage;
  * 
  * @author Aaron Cherney
  */
-public class JsonDecoder extends Decoder
+public class JsonDecoder extends Decoder<JsonC2CMessage>
 {
 	private static enum STATE
 	{
@@ -58,7 +58,7 @@ public class JsonDecoder extends Decoder
 	public ArrayList<byte[]> separateMessages(byte[] messageBytes)
 		throws C2CMVTException
 	{
-		ArrayList<byte[]> messageList = new ArrayList();
+		ArrayList<byte[]> messageList = new ArrayList<byte[]>();
 		try (ByteArrayInputStream byteInputStream = new ByteArrayInputStream(messageBytes);
 			BufferedReader reader = new BufferedReader(new InputStreamReader(byteInputStream, Charset.forName(encoding))))
 		{
