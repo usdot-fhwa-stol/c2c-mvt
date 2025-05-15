@@ -17,18 +17,17 @@ package usdot.fhwa.stol.c2c.c2c_mvt.standards;
 
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import org.springframework.core.io.ClassPathResource;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.github.erosb.jsonsKema.JsonObject;
-import com.github.erosb.jsonsKema.JsonParser;
-import com.github.erosb.jsonsKema.JsonString;
-import com.github.erosb.jsonsKema.JsonValue;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import usdot.fhwa.stol.c2c.c2c_mvt.C2CMVTException;
 import usdot.fhwa.stol.c2c.c2c_mvt.decoders.Decoder;
@@ -84,7 +83,7 @@ public class C2CMVTStandards
 	/**
 	 * Map of C2C standards, where the key is the standard name and the value is the C2CStandard object.
 	 */
-	private final Map<String, C2CMVTStandard> c2cStandardMap = new HashMap<>();
+	private final Map<String, C2CMVTStandardVersions> c2cStandardMap = new HashMap<>();
 
 
 	/**
@@ -98,16 +97,18 @@ public class C2CMVTStandards
 	{
 		try
 		{
-			JsonObject c2CStandards;
+			ObjectNode objectNode = (ObjectNode)new ObjectMapper().readTree(resource.getInputStream());
 			try (InputStream inputStream = resource.getInputStream())
 			{
-				c2CStandards = (JsonObject)new JsonParser(inputStream).parse();
+				objectNode = (ObjectNode)new ObjectMapper().readTree(inputStream);
 			}
 
-			for (Entry<JsonString, JsonValue> standardEntry : c2CStandards.getProperties().entrySet())
+			Iterator<Entry<String, JsonNode>> iterator = objectNode.fields();
+			while (iterator.hasNext())
 			{
-				String standardName = standardEntry.getKey().getValue();
-				c2cStandardMap.put(standardName, new C2CMVTStandard(standardName, (JsonObject)standardEntry.getValue()));
+				Entry<String, JsonNode> entry = iterator.next();
+				String standardName = entry.getKey();
+				c2cStandardMap.put(standardName, new C2CMVTStandardVersions(standardName, (ObjectNode)entry.getValue()));
 			}
 		}
 		catch (Exception oEx)
@@ -145,7 +146,7 @@ public class C2CMVTStandards
 	{
 		ObjectMapper objectMapper = new ObjectMapper();
 		ArrayNode versionsArray = objectMapper.createArrayNode();
-		C2CMVTStandard standard = c2cStandardMap.get(standardName);
+		C2CMVTStandardVersions standard = c2cStandardMap.get(standardName);
 		for (String versionName : standard.c2cStandardVersionMap.keySet())
 		{
 			versionsArray.add(versionName);
@@ -154,6 +155,7 @@ public class C2CMVTStandards
 		return objectMapper.writeValueAsString(versionsArray);
 	}
 
+	
 	/**
 	 * Returns a string representation of a JSON array of the encodings for the specified C2C standard and version.
 	 * @param standardName the name of the C2C standard
@@ -165,9 +167,9 @@ public class C2CMVTStandards
 	{
 		ObjectMapper objectMapper = new ObjectMapper();
 		ArrayNode encodingsArray = objectMapper.createArrayNode();
-		C2CMVTStandard standard = c2cStandardMap.get(standardName);
+		C2CMVTStandardVersions standard = c2cStandardMap.get(standardName);
 		C2CMVTStandardVersion version = standard.c2cStandardVersionMap.get(versionName);
-		for (String encoding : version.encodingsList)
+		for (String encoding : version.getEncodings())
 		{
 			encodingsArray.add(encoding);
 		}
@@ -187,9 +189,9 @@ public class C2CMVTStandards
 	{
 		ObjectMapper objectMapper = new ObjectMapper();
 		ArrayNode messageTypesArray = objectMapper.createArrayNode();
-		C2CMVTStandard standard = c2cStandardMap.get(standardName);
+		C2CMVTStandardVersions standard = c2cStandardMap.get(standardName);
 		C2CMVTStandardVersion version = standard.c2cStandardVersionMap.get(versionName);
-		for (String messageType : version.messageTypesList)
+		for (String messageType : version.getMessageTypes())
 		{
 			messageTypesArray.add(messageType);
 		}
@@ -208,11 +210,11 @@ public class C2CMVTStandards
 	@SuppressWarnings("unchecked")
 	public Decoder<C2CBaseMessage> getDecoderInstance(String standardName, String versionName) throws C2CMVTException
 	{
-		C2CMVTStandard standard = c2cStandardMap.get(standardName);
+		C2CMVTStandardVersions standard = c2cStandardMap.get(standardName);
 		C2CMVTStandardVersion version = standard.c2cStandardVersionMap.get(versionName);
 		try
 		{
-			return (Decoder<C2CBaseMessage>)Class.forName(version.decoderFQN).getDeclaredConstructor().newInstance();
+			return (Decoder<C2CBaseMessage>)Class.forName(version.getDecoder()).getDeclaredConstructor().newInstance();
 		}
 		catch (Exception ex)
 		{
@@ -231,11 +233,11 @@ public class C2CMVTStandards
 	@SuppressWarnings("unchecked")
 	public Parser<C2CBaseMessage> getParserInstance(String standardName, String versionName) throws C2CMVTException
 	{
-		C2CMVTStandard standard = c2cStandardMap.get(standardName);
+		C2CMVTStandardVersions standard = c2cStandardMap.get(standardName);
 		C2CMVTStandardVersion version = standard.c2cStandardVersionMap.get(versionName);
 		try
 		{
-			return (Parser<C2CBaseMessage>)Class.forName(version.parserFQN).getDeclaredConstructor().newInstance();
+			return (Parser<C2CBaseMessage>)Class.forName(version.getParser()).getDeclaredConstructor().newInstance();
 		}
 		catch (Exception ex)
 		{

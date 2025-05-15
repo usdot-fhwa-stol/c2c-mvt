@@ -16,17 +16,20 @@
 package usdot.fhwa.stol.c2c.c2c_mvt.standards;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.github.erosb.jsonsKema.JsonObject;
-import com.github.erosb.jsonsKema.JsonString;
-import com.github.erosb.jsonsKema.JsonValue;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * This class represents a C2C standard and all of its versions.
  */
-public class C2CMVTStandard 
+public class C2CMVTStandardVersions 
 {
 	/**
 	 * A map of all the versions of this C2C standard. The key is the version name
@@ -41,13 +44,20 @@ public class C2CMVTStandard
 	 * @param standardName the name of the standard
 	 * @param standard the JSON object representing the standard
 	 */
-	C2CMVTStandard(String standardName, JsonObject standard)
+	C2CMVTStandardVersions(String standardName, ObjectNode standard) throws JsonMappingException, JsonProcessingException
 	{
-		JsonObject versions = (JsonObject)standard.get("versions");
-		for (Entry<JsonString, JsonValue> versionEntry : versions.getProperties().entrySet())
+		ObjectNode versions = (ObjectNode)standard.get("versions");
+		Iterator<Entry<String, JsonNode>> versionIterator = versions.fields();
+		ObjectMapper objectMapper = new ObjectMapper();
+		while (versionIterator.hasNext())
 		{
-			String versionName = versionEntry.getKey().getValue();
-			c2cStandardVersionMap.put(versionName, new C2CMVTStandardVersion((JsonObject)versionEntry.getValue()));
+			Entry<String, JsonNode> versionEntry = versionIterator.next();
+			String versionName = versionEntry.getKey();
+			C2CMVTStandardVersion version = objectMapper.readValue(versionEntry.getValue().toString(), C2CMVTStandardVersion.class);
+			version.setDecoder("usdot.fhwa.stol.c2c.c2c_mvt.decoders." + version.getDecoder());
+			version.setParser("usdot.fhwa.stol.c2c.c2c_mvt.parsers." + version.getParser());
+			version.setValidator("usdot.fhwa.stol.c2c.c2c_mvt.validators." + version.getValidator());
+			c2cStandardVersionMap.put(versionName, version);
 		}
 	}
 }

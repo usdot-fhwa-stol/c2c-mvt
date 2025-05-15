@@ -15,13 +15,8 @@
  */
 package usdot.fhwa.stol.c2c.c2c_mvt.standards;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import com.github.erosb.jsonsKema.JsonArray;
-import com.github.erosb.jsonsKema.JsonObject;
-import com.github.erosb.jsonsKema.JsonString;
-import com.github.erosb.jsonsKema.JsonValue;
 
 /**
  * This class represents a version of a C2C standard and includes the necessary fields for
@@ -32,62 +27,157 @@ public class C2CMVTStandardVersion
 	/*
 	 * A list of encodings supported by this version of a C2C standard.
 	 */
-	List<String> encodingsList;
+	private List<String> encodings;
 
 
 	/*
 	 * A list of message types supported by this version of a C2C standard. Can be empty
 	 * if the messages are self defining
 	 */
-	List<String> messageTypesList;
+	private List<String> messageTypes;
 
 
 	/*
 	 * The fully qualified name of the decoder class for this version of a C2C standard.
 	 */
-	String decoderFQN;
+	private String decoder;
 
 
 	/*
 	 * The fully qualified name of the parser class for this version of a C2C standard.
 	 */
-	String parserFQN;
+	private String parser;
 
 
 	/*
 	 * The fully qualified name of the validator class for this version of a C2C standard.
 	 */
-	String validatorFQN;
+	private String validator;
 
 
 	/*
 	 * The name of the schema file for this version of a C2C standard.
 	 */
-	String schemaFile;
+	private String schema;
+
 
 	/**
-	 * 
-	 * @param version
+	 * Gets the encodings supported by this version of a C2C standard.
+	 * @return A list of encodings supported by this version of a C2C standard.
 	 */
-	C2CMVTStandardVersion(JsonObject version)
+	public List<String> getEncodings() 
 	{
-		JsonArray encodingArray = (JsonArray)version.get("encodings");
-		encodingsList = new ArrayList<>(encodingArray.length());
-		for (JsonValue encoding : encodingArray.getElements())
-		{
-			encodingsList.add(((JsonString)encoding).getValue());
-		}
+		return encodings;
+	}
 
-		JsonArray messageTypeArray = (JsonArray)version.get("messageTypes");
-		messageTypesList = new ArrayList<>(messageTypeArray.length());
-		for (JsonValue messageType : messageTypeArray.getElements())
-		{
-			messageTypesList.add(((JsonString)messageType).getValue());
-		}
 
-		decoderFQN = "usdot.fhwa.stol.c2c.c2c_mvt.decoders." + ((JsonString)version.get("decoder")).getValue();
-		parserFQN = "usdot.fhwa.stol.c2c.c2c_mvt.parsers." + ((JsonString)version.get("parser")).getValue();
-		validatorFQN = "usdot.fhwa.stol.c2c.c2c_mvt.validators." + ((JsonString)version.get("validator")).getValue();
-		schemaFile = ((JsonString)version.get("schema")).getValue();
+	/**
+	 * Sets the encodings supported by this version of a C2C standard.
+	 * @param encodings A list of encodings supported by this version of a C2C standard.
+	 */
+	public void setEndcodings(List<String> encodings) 
+	{
+		this.encodings = encodings;
+	}
+
+
+	/**
+	 * Gets the message types supported by this version of a C2C standard.
+	 * @return A list of message types supported by this version of a C2C standard.
+	 */
+	public List<String> getMessageTypes() 
+	{
+		return messageTypes;
+	}
+
+
+	/**
+	 * Sets the message types supported by this version of a C2C standard.
+	 * This can be empty if the messages are self defining.
+	 * @param messageTypes A list of message types supported by this version of a C2C standard.
+	 */
+	public void setMessageTypes(List<String> messageTypes) 
+	{
+		this.messageTypes = messageTypes;
+	}
+
+
+	/**
+	 * Gets the fully qualified name of the decoder class for this version of a C2C standard.
+	 * @return The fully qualified name of the decoder class for this version of a C2C standard.
+	 */
+	public String getDecoder() 
+	{
+		return decoder;
+	}
+
+
+	/**
+	 * Sets the fully qualified name of the decoder class for this version of a C2C standard.
+	 * @param decoder The fully qualified name of the decoder class for this version of a C2C standard.
+	 */
+	public void setDecoder(String decoder) 
+	{
+		this.decoder = decoder;
+	}
+
+
+	/**
+	 * Gets the fully qualified name of the parser class for this version of a C2C standard.
+	 * @return The fully qualified name of the parser class for this version of a C2C standard.
+	 */
+	public String getParser() 
+	{
+		return parser;
+	}
+
+
+	/**
+	 * Sets the fully qualified name of the parser class for this version of a C2C standard.
+	 * @param parser The fully qualified name of the parser class for this version of a C2C standard.
+	 */
+	public void setParser(String parser) 
+	{
+		this.parser = parser;
+	}
+	
+
+	/**
+	 * Gets the fully qualified name of the validator class for this version of a C2C standard.
+	 * @return The fully qualified name of the validator class for this version of a C2C standard.
+	 */
+	public String getValidator() 
+	{
+		return validator;
+	}
+
+
+	/**
+	 * Sets the fully qualified name of the validator class for this version of a C2C standard.
+	 * @param validator The fully qualified name of the validator class for this version of a C2C standard.
+	 */
+	public void setValidator(String validator) 
+	{
+		this.validator = validator;
+	}
+
+
+	/**
+	 * Gets the name of the schema file for this version of a C2C standard.
+	 * @return The name of the schema file for this version of a C2C standard.
+	 */
+	public String getSchema() 
+	{
+		return schema;
+	}
+
+
+	/**
+	 * Sets the name of the schema file for this version of a C2C standard.
+	 * @param schema The name of the schema file for this version of a C2C standard.
+	 */
+	public void setSchema(String schema) 
+	{
+		this.schema = schema;
 	}
 }
