@@ -19,16 +19,10 @@ package usdot.fhwa.stol.c2c.c2c_mvt.controllers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.github.erosb.jsonsKema.IJsonString;
-import com.github.erosb.jsonsKema.IJsonValue;
-import com.github.erosb.jsonsKema.JsonObject;
-import com.github.erosb.jsonsKema.JsonParser;
-import com.github.erosb.jsonsKema.JsonString;
 import jakarta.annotation.PostConstruct;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
@@ -59,6 +53,7 @@ import usdot.fhwa.stol.c2c.c2c_mvt.C2CMVTApplication;
 import usdot.fhwa.stol.c2c.c2c_mvt.decoders.Decoder;
 import usdot.fhwa.stol.c2c.c2c_mvt.messages.C2CBaseMessage;
 import usdot.fhwa.stol.c2c.c2c_mvt.parsers.Parser;
+import usdot.fhwa.stol.c2c.c2c_mvt.standards.C2CMVTStandards;
 
 /**
  * This is the main class/controller of the application. It handles all of the user
@@ -87,7 +82,7 @@ public class StandardValidationController
 	/**
 	 * This object contains all of the configuration items for the implemented standards
 	 */
-	private JsonObject c2CStandards;
+	private C2CMVTStandards standards;
 
 	
 	/**
@@ -148,17 +143,15 @@ public class StandardValidationController
 		{
 			logException(LOGGER, ex, "Failed to set a working directory", null);
 		}
-			
-		ClassPathResource cPR = new ClassPathResource("c2c-mvt.json");
-		try (InputStream oIn = cPR.getInputStream())
+		
+		try
 		{
-			c2CStandards = (JsonObject)new JsonParser(oIn).parse();
+			standards = new C2CMVTStandards(new ClassPathResource("c2c-mvt.json"));
 		}
-		catch (IOException ex)
+		catch (C2CMVTException ex)
 		{
-			logException(LOGGER, ex, "Failed to read standards configuration", null);
+			logException(LOGGER, ex.originalException, ex.additionalMessage, null);
 		}
-
 	}
 	
 	
@@ -249,17 +242,11 @@ public class StandardValidationController
 				}
 			}
 
-			ObjectMapper objectMapper = new ObjectMapper();
-			ArrayNode standardsArray = objectMapper.createArrayNode();
-			for (JsonString standard : c2CStandards.getProperties().keySet())
-			{
-				standardsArray.add(standard.getValue());
-			}
-			return ResponseEntity.ok(objectMapper.writeValueAsString(standardsArray));
+			return ResponseEntity.ok(standards.getStandardsAsJsonArray());
 		}
 		catch (Exception ex)
 		{
-			logException(LOGGER, ex, null, null);
+			logException(LOGGER, ex, "Failed to get standards", null);
 			return ResponseEntity.internalServerError().body("{\"error\": \"Failed to get standards\"}");
 		}
         
@@ -282,18 +269,13 @@ public class StandardValidationController
 		try
 		{
 			LOGGER.debug(String.format("getVersions() invoked with standard = %s", standard));
-			ObjectMapper objectMapper = new ObjectMapper();
-			ArrayNode versionsArray = objectMapper.createArrayNode();
-			for (IJsonString version : c2CStandards.get(standard).requireObject().get("versions").requireObject().getProperties().keySet())
-			{
-				versionsArray.add(version.getValue());
-			}
 
-			return ResponseEntity.ok(objectMapper.writeValueAsString(versionsArray));
+
+			return ResponseEntity.ok(standards.getVersionsAsJsonArray(standard));
 		}
 		catch (Exception ex)
 		{
-			logException(LOGGER, ex, null, null);
+			logException(LOGGER, ex, "Failed to get versions", null);
 			return ResponseEntity.internalServerError().body("{\"error\": \"Failed to get versions\"}");
 		}
 	}
@@ -315,16 +297,12 @@ public class StandardValidationController
 		try
 		{
 			LOGGER.debug(String.format("getEncodings() invoked with standard = %s and version = %s", standard, version));
-			IJsonValue encodingList = c2CStandards.get(standard).requireObject().get("versions").requireObject().get(version).requireObject().get("encodings");
-			
-			if (encodingList == null)
-				return ResponseEntity.ok("[\"UTF-8\"]");
 
-			return ResponseEntity.ok(encodingList.toString());
+			return ResponseEntity.ok(standards.getEncodingsAsJsonArray(standard, version));
 		}
-		catch (NullPointerException ex)
+		catch (Exception ex)
 		{
-			logException(LOGGER, ex, null, null);
+			logException(LOGGER, ex, "Failed to get encodings", null);
 			return ResponseEntity.internalServerError().body("{\"error\": \"Failed to get encodings\"}");
 		}
 	}
@@ -346,15 +324,12 @@ public class StandardValidationController
 		try
 		{
 			LOGGER.debug(String.format("getMessageTypes() invoked with standard = %s and version = %s", standard, version));
-			IJsonValue msgTypesList = c2CStandards.get(standard).requireObject().get("versions").requireObject().get(version).requireObject().get("messageTypes");
-			if (msgTypesList == null)
-				return ResponseEntity.ok("[]");
 
-			return ResponseEntity.ok(msgTypesList.toString());
+			return ResponseEntity.ok(standards.getMessageTypesAsJsonArray(standard, version));
 		}
 		catch (Exception ex)
 		{
-			logException(LOGGER, ex, null, null);
+			logException(LOGGER, ex, "Failed to get message types", null);
 			return ResponseEntity.internalServerError().body("{\"error\": \"Failed to get message types\"}");
 		}
 		
@@ -522,7 +497,7 @@ public class StandardValidationController
 		String uuidAsString = null;
 		try
 		{
-			Decoder<C2CBaseMessage> decoder = getDecoderInstance(standard, version);
+			Decoder<C2CBaseMessage> decoder = standards.getDecoderInstance(standard, version);
 			decoder.setEncoding(encoding);
 			if (!decoder.checkSecurity(messageBytes))
 				throw new C2CMVTException(new Exception("Found possible security threat. Did not attempt validation."), null);
@@ -545,7 +520,7 @@ public class StandardValidationController
 						throw new C2CMVTException(ex, String.format("Failed to save message to disk for message %d of %d", msgNum, msgTotal));
 					}
 					C2CBaseMessage decodedMsg = decoder.checkSyntax(msgBytes);
-					Parser<C2CBaseMessage> parser = getParserInstance(standard, version);
+					Parser<C2CBaseMessage> parser = standards.getParserInstance(standard, version);
 					String msgType = selectedMessageType;
 					if (msgType.toLowerCase().compareTo("auto detect") == 0)
 						msgType = parser.identifyMessageType(decodedMsg);
@@ -575,48 +550,6 @@ public class StandardValidationController
 		}
 	}
 
-
-	/**
-	 * Creates a new instance of the Decoder for the given C2C standard and version
-	 * @param standard name of the C2C standard
-	 * @param version version of the C2C standard
-	 * @return a new instance of the Decoder for the given C2C standard and version
-	 * @throws C2CMVTException if an error occurs while creating the Decoder instance
-	 */
-	@SuppressWarnings("unchecked")
-	private Decoder<C2CBaseMessage> getDecoderInstance(String standard, String version) throws C2CMVTException
-	{
-		try
-		{
-			String decoderClass = c2CStandards.get(standard).requireObject().get("versions").requireObject().get(version).requireObject().get("decoder").requireString().getValue();
-			return (Decoder<C2CBaseMessage>)Class.forName(decoderClass).getDeclaredConstructor().newInstance();
-		}
-		catch (Exception ex)
-		{
-			throw new C2CMVTException(ex, String.format("Failed to instantiate decoder for version %s of standard %s", version, standard));
-		}
-	}
-
-	/**
-	 * Creates a new instance of the Parser for the given C2C standard and version
-	 * @param standard name of the C2C standard
-	 * @param version version of the C2C standard
-	 * @return a new instance of the Parser for the given C2C standard and version
-	 * @throws C2CMVTException if an error occurs while creating the Parser instance
-	 */
-	@SuppressWarnings("unchecked")
-	private Parser<C2CBaseMessage> getParserInstance(String standard, String version) throws C2CMVTException
-	{
-		try
-		{
-			String parserClass = c2CStandards.get(standard).requireObject().get("versions").requireObject().get(version).requireObject().get("parser").requireString().getValue();
-			return (Parser<C2CBaseMessage>)Class.forName(parserClass).getDeclaredConstructor().newInstance();
-		}
-		catch (Exception ex)
-		{
-			throw new C2CMVTException(ex, String.format("Failed to instantiate parser for version %s of standard %s", version, standard));
-		}
-	}
 	
 	/**
 	 * Formats the given message with a timestamp and the UUID of the message

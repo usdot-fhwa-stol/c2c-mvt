@@ -7,37 +7,46 @@
 			{
 				"encodings": ["UTF-8"],
 				"messageTypes": ["DMSControlRequest"],
-				"decoder": "usdot.fhwa.stol.c2c.c2c_mvt.decoders.JsonDecoder",
-				"parser": "usdot.fhwa.stol.c2c.c2c_mvt.parsers.NGTMDDJsonParser",
+				"decoder": "JsonDecoder",
+				"parser": "NGTMDDJsonParser",
+				"validator": "JsonValidator",
 				"schema": "ngTMDD/ngTMDD_Schema_v1.0.json"
-			},
-			"1.01" :
-			{
 			},
 			"1.1" :
 			{
-			},
-			"2.0" :
-			{
+				"encodings": ["UTF-8"],
+				"messageTypes": ["DMSControlRequest"],
+				"decoder": "JsonDecoder",
+				"parser": "NGTMDDJsonParser",
+				"validator": "JsonValidator",
+				"schema": "ngTMDD/ngTMDD_Schema_v1.1.json"
 			}
+
 		}
 	},
 	"TMDD":
 	{
 		"versions":
 		{
-			"3.03c" :
-			{
-				"encodings": ["text"]
-			},
 			"3.03d" :
 			{
-				"encodings": ["text", "Base64"]
+				"encodings": ["Base64", "UTF-8"],
+				"messageTypes": [],
+				"decoder": "XmlDecoder",
+				"parser": "TMDDXmlParser",
+				"validator": "XmlValidator",
+				"schema": "TMDD/TMDD_Schema_v3.03.xsd"
 			},
 			"3.1" :
 			{
-				"encodings": ["text", "Hex", "Base64"]
-			} 
+				"encodings": ["UTF-8"],
+				"messageTypes": [],
+				"decoder": "XmlDecoder",
+				"parser": "TMDDXmlParser",
+				"validator": "XmlValidator",
+				"schema": "TMDD/TMDD_Schema_v3.1.xsd"
+			}
+
 		}
 	}
 }
