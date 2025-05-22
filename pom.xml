@@ -63,46 +63,44 @@
 	 </dependency>
 	</dependencies>
 
-    <build>
-        <finalName>c2c-mvt</finalName>
-
-        <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
-        </plugins>
-        <profiles>
-            <profile>
-                <id>coverage</id>
-                <build>
-                    <plugins>
-                        <plugin>
-                            <groupId>org.jacoco</groupId>
-                            <artifactId>jacoco-maven-plugin</artifactId>
-                            <version>0.8.12</version> <!-- latest (May 2025) -->
-                            <executions>
-                                <!-- Attach JaCoCo agent before tests run -->
-                                <execution>
-                                    <id>prepare-agent</id>
-                                    <goals><goal>prepare-agent</goal></goals>
-                                    <phase>initialize</phase>
-                                </execution>
-                                <!-- Produce XML report that SonarCloud reads -->
-                                <execution>
-                                    <id>report</id>
-                                    <goals><goal>report</goal></goals>
-                                    <phase>verify</phase>
-                                    <configuration>
-                                        <outputDirectory>${project.build.directory}/site/jacoco</outputDirectory>
-                                    </configuration>
-                                </execution>
-                            </executions>
-                        </plugin>
-                    </plugins>
-                </build>
-            </profile>
-        </profiles>
-    </build>
-
+	<build>
+		<finalName>c2c-mvt</finalName>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+    <profiles>
+        <profile>
+            <id>coverage</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.jacoco</groupId>
+                        <artifactId>jacoco-maven-plugin</artifactId>
+                        <version>0.8.12</version>
+                        <executions>
+                            <execution>
+                                <id>prepare-agent</id>
+                                <goals><goal>prepare-agent</goal></goals>
+                                <phase>initialize</phase>
+                            </execution>
+                            <execution>
+                                <id>report</id>
+                                <goals><goal>report</goal></goals>
+                                <phase>verify</phase>
+                                <configuration>
+                                    <outputDirectory>
+                                        ${project.build.directory}/site/jacoco
+                                    </outputDirectory>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
