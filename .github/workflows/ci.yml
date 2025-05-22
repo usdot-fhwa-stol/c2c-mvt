@@ -45,4 +45,3 @@ jobs:
             -Dsonar.sources=src/main/java
             -Dsonar.tests=src/test/java
             -Dsonar.coverage.exclusions=src/main/resources/static/**,src/test/java/**,**/*Exception.java,**/C2CMVTApplication.java,**/ServletInitializer.java
-            -Dsonar.newCode.referenceBranch=main
