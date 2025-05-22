@@ -42,3 +42,7 @@ jobs:
             -Dsonar.projectKey=usdot-fhwa-stol_c2c-mvt
             -Dsonar.java.binaries=target
             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+            -Dsonar.sources=src/main/java
+            -Dsonar.tests=src/test/java
+            -Dsonar.coverage.exclusions=src/main/resources/static/**,src/test/java/**,**/*Exception.java,**/C2CMVTApplication.java,**/ServletInitializer.java
+            -Dsonar.newCode.referenceBranch=main
