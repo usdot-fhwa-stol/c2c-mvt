@@ -1,4 +1,4 @@
-name: Build and Test Spring Boot App
+name: Build, Test & SonarCloud
 
 on:
   push:
@@ -6,29 +6,42 @@ on:
       - main
       - develop
       - master
-      - release/*
-      - feature/*
-      - hotfix/*
+      - 'release/*'
+      - 'feature/*'
+      - 'hotfix/*'
   pull_request:
-    branches:
-      - develop
-      - master
-      - main
+    branches: [develop, master, main]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
-          distribution: 'temurin'
-          java-version: '17'
-          cache: 'maven'
+          distribution: temurin
+          java-version: 17
+          cache: maven
 
-      - name: Build and run tests
-        run: mvn clean install
+      - name: Build & Test
+        run: ./mvnw -B -Pcoverage clean verify
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v5.2.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
+        with:
+          args: >
+            -Dsonar.organization=usdot-fhwa-stol
+            -Dsonar.projectKey=usdot-fhwa-stol_c2c-mvt
+            -Dsonar.java.binaries=target
+            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+            -Dsonar.sources=src/main/java
+            -Dsonar.tests=src/test/java
+            -Dsonar.coverage.exclusions=src/main/resources/static/**,src/test/java/**,**/*Exception.java,**/C2CMVTApplication.java,**/ServletInitializer.java
