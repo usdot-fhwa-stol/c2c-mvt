@@ -33,6 +33,7 @@ import usdot.fhwa.stol.c2c.c2c_mvt.C2CMVTException;
 import usdot.fhwa.stol.c2c.c2c_mvt.decoders.Decoder;
 import usdot.fhwa.stol.c2c.c2c_mvt.messages.C2CBaseMessage;
 import usdot.fhwa.stol.c2c.c2c_mvt.parsers.Parser;
+import usdot.fhwa.stol.c2c.c2c_mvt.validators.Validator;
 
 
 /**
@@ -238,6 +239,28 @@ public class C2CMVTStandards
 		try
 		{
 			return (Parser<C2CBaseMessage>)Class.forName(version.getParser()).getDeclaredConstructor().newInstance();
+		}
+		catch (Exception ex)
+		{
+			throw new C2CMVTException(ex, String.format("Failed to instantiate parser for version %s of standard %s", versionName, standardName));
+		}
+	}
+
+	/**
+	 * Creates a new instance of the Validator for the given C2C standard and version
+	 * @param standardName name of the C2C standard
+	 * @param versionName version of the C2C standard
+	 * @return a new instance of the Validator for the given C2C standard and version
+	 * @throws C2CMVTException if an error occurs while creating the Validator instance
+	 */
+	@SuppressWarnings("unchecked")
+	public Validator<C2CBaseMessage> getValidatorInstance(String standardName, String versionName) throws C2CMVTException
+	{
+		C2CMVTStandardVersions standard = c2cStandardMap.get(standardName);
+		C2CMVTStandardVersion version = standard.c2cStandardVersionMap.get(versionName);
+		try
+		{
+			return (Validator<C2CBaseMessage>)Class.forName(version.getValidator()).getDeclaredConstructor(ClassPathResource.class).newInstance(new ClassPathResource(version.getSchema()));
 		}
 		catch (Exception ex)
 		{

@@ -26,6 +26,12 @@ public class C2CBaseMessage
 	 * Representation of the message as bytes
 	 */
 	protected byte[] messageBytes;
+
+
+	/**
+	 * The message type of the message
+	 */
+	protected String messageType;
 	
 	
 	/**
@@ -38,15 +44,31 @@ public class C2CBaseMessage
 	}
 	
 	
+	/**
+	 * Gets the byte array representation of the message
+	 * @return the byte array represenetation of the message
+	 */
 	public byte[] getBytes()
 	{
 		return messageBytes;
 	}
-	
-	
-	@Override
-	public String toString()
+
+
+	/**
+	 * Setter for {@link C2CBaseMessage#messageType}
+	 * @param messageType the message type
+	 */
+	public void setMessageType(String messageType)
 	{
-		return String.format("Message is %d bytes", messageBytes.length);
+		this.messageType = messageType;
+	}
+
+
+	/**
+	 * Getter for {@link C2CBaseMessage#messageType}
+	 */
+	public String getMessageType()
+	{
+		return messageType;
 	}
 }

@@ -16,10 +16,11 @@
 package usdot.fhwa.stol.c2c.c2c_mvt.controllers;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -105,7 +106,7 @@ class StandardValidationControllerTest {
 		ResponseEntity<String> response = restTemplate.postForEntity(url, null, String.class);
 	
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-		assertThat(response.getBody()).contains("DMSControlRequest");
+		assertThat(response.getBody()).contains("[]");
 	}
 	
 
@@ -118,11 +119,13 @@ class StandardValidationControllerTest {
 
 		String validJson = """
 		{
-		"DMSControlRequest": {
-			"requestId": "1234",
-			"dmsId": "5678",
-			"message": "Test DMS message"
-		}
+			"message":
+			{
+				"messageType": "ActivityLogRequest",
+				"ownerOrganizationId": "org_id",
+				"externalOrganizationId": "ext_org_id",
+				"requestId": "request_id"
+			}
 		}
 		""";
 
@@ -138,7 +141,7 @@ class StandardValidationControllerTest {
 		body.add("standard", "ngTMDD");
 		body.add("version", "1.0");
 		body.add("encoding", "UTF-8");
-		body.add("message_type", "DMSControlRequest");
+		body.add("message_type", "Auto Detect");
 
 		HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
 
@@ -172,18 +175,33 @@ class StandardValidationControllerTest {
 	@Test
 	void testValidateMessages_NoExceptionThrown() {
 		// Arrange
-		String jsonString = "{\"key1\":\"value1\",\"key2\":\"value2\",\"key3\":\"value3\"}";
+		String jsonString =
+		"""
+		{
+			"message":
+			{
+				"messageType": "ActivityLogRequest",
+				"ownerOrganizationId": "org_id",
+				"externalOrganizationId": "ext_org_id",
+				"requestId": "request_id"
+			}
+		}		
+		""";
 		byte[] messageBytes = jsonString.getBytes(StandardCharsets.UTF_8);
 		String fileExt = ".json";
 		String standard = "ngTMDD";
 		String version = "1.0";
 		String encoding = "UTF-8";
-		String selectedMessageType = "DMSControlRequest";
+		String selectedMessageType = "Auto Detect";
 
-		// Act & Assert
-		assertDoesNotThrow(() -> {
-			controller.validateMessages(messageBytes, fileExt, standard, version, encoding, selectedMessageType);
-		});
+		controller.validateMessages(messageBytes, fileExt, standard, version, encoding, selectedMessageType);
+		ArrayList<String> validationMessages = StandardValidationController.getValidationRecords();
+		for (String validationMessage : validationMessages)
+		{
+			if (validationMessage.contains("Failed to validate message"))
+				Assertions.fail("An Exception was thrown during validateMessage");
+		}
+
 	}
 
 }

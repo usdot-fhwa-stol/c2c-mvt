@@ -54,6 +54,7 @@ import usdot.fhwa.stol.c2c.c2c_mvt.decoders.Decoder;
 import usdot.fhwa.stol.c2c.c2c_mvt.messages.C2CBaseMessage;
 import usdot.fhwa.stol.c2c.c2c_mvt.parsers.Parser;
 import usdot.fhwa.stol.c2c.c2c_mvt.standards.C2CMVTStandards;
+import usdot.fhwa.stol.c2c.c2c_mvt.validators.Validator;
 
 /**
  * This is the main class/controller of the application. It handles all of the user
@@ -519,13 +520,15 @@ public class StandardValidationController
 					{
 						throw new C2CMVTException(ex, String.format("Failed to save message to disk for message %d of %d", msgNum, msgTotal));
 					}
-					C2CBaseMessage decodedMsg = decoder.checkSyntax(msgBytes);
+					C2CBaseMessage message = decoder.checkSyntax(msgBytes);
 					Parser<C2CBaseMessage> parser = standards.getParserInstance(standard, version);
-					String msgType = selectedMessageType;
-					if (msgType.toLowerCase().compareTo("auto detect") == 0)
-						msgType = parser.identifyMessageType(decodedMsg);
+					message.setMessageType(selectedMessageType);
+					if (selectedMessageType.toLowerCase().compareTo("auto detect") == 0)
+						message.setMessageType(parser.identifyMessageType(message));
 
-					parser.parseMessage(decodedMsg);
+					parser.parseMessage(message);
+					Validator<C2CBaseMessage> validator = standards.getValidatorInstance(standard, version);
+					validator.validateMessage(message);
 					addLogRecord(String.format("Validation completed with no errors for message %d of %d", msgNum, msgTotal), uuidAsString);
 				}
 				catch (C2CMVTException ex)
@@ -622,5 +625,22 @@ public class StandardValidationController
 		{
 			VALIDATION_RECORDS.add(formatMessage(message, messageUuid));
 		}
+	}
+
+
+	/**
+	 * Gets a copy of the String contained in {@link #VALIDATION_RECORDS}. Needed
+	 * for one of the unit tests.
+	 * @return ArrayList containing all of the strings in {@link #VALIDATION_RECORDS}
+	 */
+	public static ArrayList<String> getValidationRecords()
+	{
+		ArrayList<String> copy;
+		synchronized (VALIDATION_RECORDS)
+		{
+			copy = new ArrayList<>(VALIDATION_RECORDS);
+		}
+
+		return copy;
 	}
 }

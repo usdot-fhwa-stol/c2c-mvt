@@ -63,4 +63,15 @@ public class JsonC2CMessage extends C2CBaseMessage
 	{
 		return messageAsJson.toString();
 	}
+
+
+	/**
+	 * Gets the message represented as a JsonValue.
+	 * 
+	 * @return the message as a {@link JsonValue}
+	 */
+	public JsonValue getJson()
+	{
+		return messageAsJson;
+	}
 }
