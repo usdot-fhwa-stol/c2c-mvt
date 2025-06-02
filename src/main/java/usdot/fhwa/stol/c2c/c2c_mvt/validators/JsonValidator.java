@@ -16,6 +16,7 @@
 package usdot.fhwa.stol.c2c.c2c_mvt.validators;
 
 import java.io.BufferedInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 
 import org.springframework.core.io.ClassPathResource;
@@ -73,7 +74,11 @@ public abstract class JsonValidator extends Validator<JsonC2CMessage>
 			try (BufferedInputStream inStream = new BufferedInputStream(schemaFile.getInputStream()))
 			{
 				if (includesBom)
-					inStream.skip(3);
+				{
+					long bytesSkipped = inStream.skip(3);
+					if (bytesSkipped != 3)
+						throw new IOException("Failed to read the JSON Schema file.");
+				}
 				schemaJson = new JsonParser(inStream).parse();
 			}
 			Schema schema = new SchemaLoader(schemaJson).load();
