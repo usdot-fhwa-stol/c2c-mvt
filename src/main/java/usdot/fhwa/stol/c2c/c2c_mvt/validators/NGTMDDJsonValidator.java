@@ -54,7 +54,7 @@ public class NGTMDDJsonValidator extends JsonValidator
 			String pointer = fail.getSchema().getLocation().getPointer().toString();
 			if (pointer.startsWith("#/" + message.getMessageType()) && (pointer.compareTo("#/" + message.getMessageType()) == 0 || pointer.startsWith("#/" + message.getMessageType() + "/")))
 			{
-				error.append(fail.getMessage());
+				error.append(fail.getMessage().replace("instance", fail.getInstance().toString()));
 				appendErrorPerCause(fail, error, 2);
 			}
 		}

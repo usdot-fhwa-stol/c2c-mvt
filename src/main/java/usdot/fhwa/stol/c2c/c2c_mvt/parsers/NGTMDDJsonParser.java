@@ -54,8 +54,7 @@ public class NGTMDDJsonParser extends JsonParser
 			throw new C2CMVTException(new Exception("Failed to identify message type", exception), "ngTMDD message must be a JSON Object");
 		}
 			
-		JsonObject rootJsonObject = (JsonObject)messageJsonValue;
-		JsonValue messageJsonObject = rootJsonObject.get("message");
+		JsonValue messageJsonObject = ((JsonObject)messageJsonValue).get("message");
 		if (messageJsonObject == null)
 			throw new C2CMVTException(new Exception("Failed to identify message type"), "ngTMDD root object must contain the key \"message\"");
 		

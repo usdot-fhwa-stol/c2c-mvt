@@ -98,7 +98,7 @@ class NGTMDDJsonValidatorTest {
         message.setMessageType("DMSControlRequest");
 
         String errorMsg = ngValidator.getErrorMessage(failure, message);
-        assertThat(errorMsg).contains("the instance is not equal to any enum values");
+        assertThat(errorMsg).contains("the \"BAD_ENUM\" is not equal to any enum values");
     }
 
     @Test
