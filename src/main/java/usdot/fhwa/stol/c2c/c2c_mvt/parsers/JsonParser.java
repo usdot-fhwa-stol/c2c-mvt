@@ -51,7 +51,7 @@ public class JsonParser extends Parser<JsonC2CMessage>
 	@Override
 	public String identifyMessageType(JsonC2CMessage decodedMessage) throws C2CMVTException
 	{
-		throw new C2CMVTException(new Exception("Failed to identify message type"), "Failed to identify message type");
+		throw new C2CMVTException(new Exception("Failed to identify message type"), "identifyMessageType() not implemented for this parser");
 	}
 
 }

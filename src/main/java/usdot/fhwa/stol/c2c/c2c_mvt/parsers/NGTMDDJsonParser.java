@@ -16,6 +16,11 @@
 
 package usdot.fhwa.stol.c2c.c2c_mvt.parsers;
 
+import com.github.erosb.jsonsKema.JsonObject;
+import com.github.erosb.jsonsKema.JsonString;
+import com.github.erosb.jsonsKema.JsonTypingException;
+import com.github.erosb.jsonsKema.JsonValue;
+
 import usdot.fhwa.stol.c2c.c2c_mvt.C2CMVTException;
 import usdot.fhwa.stol.c2c.c2c_mvt.messages.JsonC2CMessage;
 
@@ -28,20 +33,53 @@ import usdot.fhwa.stol.c2c.c2c_mvt.messages.JsonC2CMessage;
 public class NGTMDDJsonParser extends JsonParser
 {
 	/**
-	 * Call this only if the user selects "Auto Detect" for the message type. If
-	 * the user selects a specific message type then the message type is already
-	 * identified.
+	 * This method checks for the correct structure (the JSON root element is an object that
+	 * contains the key "message" which is an object that contains the key "messageType" which
+	 * is a String) of an ngTMDD message while parsing the message type.
 	 * 
 	 * @param decodedMessage the decoded message that needs its message type identified
 	 * @return the message type as a String
-	 * @throws C2CMVTException
+	 * @throws C2CMVTException if the message does not conform to the ngTMDD specification
 	 */
 	@Override
 	public String identifyMessageType(JsonC2CMessage decodedMessage) throws C2CMVTException
 	{
-		// TODO: Implement logic to identify the message type based on the contents of the decodedMessage
-		// Need to implement this once we know more about the ngTMDD message format
-		// For now, just throw an exception to indicate that this method needs to be implemented
-		throw new C2CMVTException(new Exception("Failed to identify message type"), "Failed to identify message type");
+		JsonValue messageJsonValue = decodedMessage.getJson();
+		try
+		{
+			messageJsonValue.requireObject();
+		}
+		catch (JsonTypingException exception)
+		{
+			throw new C2CMVTException(new Exception("Failed to identify message type", exception), "ngTMDD message must be a JSON Object");
+		}
+			
+		JsonValue messageJsonObject = ((JsonObject)messageJsonValue).get("message");
+		if (messageJsonObject == null)
+			throw new C2CMVTException(new Exception("Failed to identify message type"), "ngTMDD root object must contain the key \"message\"");
+		
+		try
+		{
+			messageJsonObject.requireObject();
+		}
+		catch (JsonTypingException exception)
+		{
+			throw new C2CMVTException(new Exception("Failed to identify message type", exception), "\"message\" property must be a JSON Object");
+		}
+
+		JsonValue messageType = ((JsonObject)messageJsonObject).get("messageType");
+		if (messageType == null)
+			throw new C2CMVTException(new Exception("Failed to identify message type"), "ngTMDD \"message\" property must contain the key \"messageType\"");
+
+		try
+		{
+			messageType.requireString();
+		}
+		catch (JsonTypingException exception)
+		{
+			throw new C2CMVTException(new Exception("Failed to identify message type", exception), "\"messageType\" property must be a String");
+		}
+		
+		return ((JsonString)messageType).getValue();
 	}
 }

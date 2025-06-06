@@ -6,37 +6,18 @@
 			"1.0" :
 			{
 				"encodings": ["UTF-8"],
-				"messageTypes": ["DMSControlRequest"],
+				"messageTypes": [],
 				"decoder": "JsonDecoder",
 				"parser": "NGTMDDJsonParser",
-				"validator": "JsonValidator",
+				"validator": "NGTMDDJsonValidator",
 				"schema": "ngTMDD/ngTMDD_Schema_v1.0.json"
-			},
-			"1.1" :
-			{
-				"encodings": ["UTF-8"],
-				"messageTypes": ["DMSControlRequest"],
-				"decoder": "JsonDecoder",
-				"parser": "NGTMDDJsonParser",
-				"validator": "JsonValidator",
-				"schema": "ngTMDD/ngTMDD_Schema_v1.1.json"
 			}
-
 		}
 	},
 	"TMDD":
 	{
 		"versions":
 		{
-			"3.03d" :
-			{
-				"encodings": ["Base64", "UTF-8"],
-				"messageTypes": [],
-				"decoder": "XmlDecoder",
-				"parser": "TMDDXmlParser",
-				"validator": "XmlValidator",
-				"schema": "TMDD/TMDD_Schema_v3.03.xsd"
-			},
 			"3.1" :
 			{
 				"encodings": ["UTF-8"],
