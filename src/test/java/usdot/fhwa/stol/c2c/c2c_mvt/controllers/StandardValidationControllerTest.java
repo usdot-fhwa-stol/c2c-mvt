@@ -201,7 +201,6 @@ class StandardValidationControllerTest {
 			if (validationMessage.contains("Failed to validate message"))
 				Assertions.fail("An Exception was thrown during validateMessage");
 		}
-
+		controller.deleteMessages();
 	}
-
 }

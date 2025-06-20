@@ -110,7 +110,6 @@ public class StandardValidationController
 	 */
 	private static final String FILE_DIR = "messages";
 
-	
 	/**
 	 * Timeout in milliseconds used to reset {@link MaxUploadSizeExceededExceptionHandler#requestTimes}
 	 */
@@ -144,6 +143,7 @@ public class StandardValidationController
 		{
 			logException(LOGGER, ex, "Failed to set a working directory", null);
 		}
+		deleteMessages();
 		
 		try
 		{
@@ -400,19 +400,32 @@ public class StandardValidationController
 			{
 				VALIDATION_RECORDS.clear();
 			}
-			try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(Path.of(workingDirectory, FILE_DIR)))
-			{
-				for (Path file : directoryStream)
-				{
-					Files.deleteIfExists(file);
-				}
-			}
+			deleteMessages();
 			return ResponseEntity.ok("{\"msg\": \"Success\"}");
 		}
 		catch (Exception ex)
 		{
 			logException(LOGGER, ex, null, null);
 			return ResponseEntity.badRequest().body("{\"error\": \"Failed to upload.\"}");
+		}
+	}
+
+
+	/**
+	 * Deletes stored messages that have been submitted for validation.
+	 */
+	public void deleteMessages()
+	{
+		try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(Path.of(workingDirectory, FILE_DIR)))
+		{
+			for (Path file : directoryStream)
+			{
+				Files.deleteIfExists(file);
+			}
+		}
+		catch (Exception ex)
+		{
+			logException(LOGGER, ex, null, null);
 		}
 	}
 	
