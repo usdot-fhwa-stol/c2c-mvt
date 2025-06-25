@@ -99,6 +99,12 @@ function uploadFile()
 	}
 	else
 	{
+		let oReader = new FileReader();
+		oReader.addEventListener('load', function()
+		{
+			$('.file_textarea').val(oReader.result);
+		});
+		oReader.readAsText(oFileToUpload);
 		oFormData.append('uploaded_file', oFileToUpload);
 	}
 	oFormData.append('standard', $('#select_standard').find(':selected').val());
@@ -151,7 +157,7 @@ function uploadFile()
 		}
 	});
 	oFileToUpload = null;
-	$('.file_textarea').val('').hide();
+	$('.file_textarea').hide();
 	$('.drop_file').css('display', 'none');
 	$('.cannotdrop_file').css('display', 'none');
 	$('#progressBar').val(0);
@@ -398,6 +404,7 @@ function resetLog()
 		'dataType': 'JSON'
 	});
 	$('.msgcontainer').val('');
+	setButtonDisabled();
 }
 
 
