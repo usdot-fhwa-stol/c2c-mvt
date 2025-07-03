@@ -15,6 +15,10 @@ import usdot.fhwa.stol.c2c.c2c_mvt.messages.JsonC2CMessage;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 
 class NGTMDDJsonValidatorTest {
@@ -124,5 +128,71 @@ class NGTMDDJsonValidatorTest {
 
         String errorMsg = ngValidator.getErrorMessage(failure, message);
         assertThat(errorMsg).contains("required properties are missing: mode");
+    }
+
+    @Test
+    void testAppendErrorPerCause_AppendsNestedErrors() throws Exception {
+        String instanceStr = """
+        {
+          "message":
+          {
+            "messageType": "CCTVImageLinkRequest",
+            "deviceInformationRequest":
+            {
+              "ownerOrganization": 
+              {
+                "organizationId": "myorg"
+              },
+              "deviceType": "cctv camera",
+              "deviceInformationType": "image link"
+            },
+            "imageType": "suppressed"
+          }
+        }
+        """;
+		NGTMDDJsonValidator ngValidator = new NGTMDDJsonValidator(new ClassPathResource("ngTMDD/ngTMDD_Schema_v1.0.json"));
+		byte[] bomCheck = new byte[3];
+		boolean includesBom = false;
+		try (InputStream inStream = ngValidator.schemaFile.getInputStream())
+		{
+			int bytesRead = inStream.read(bomCheck);
+			if (bytesRead > 2)
+				includesBom = bomCheck[0] == (byte)0xEF && bomCheck[1] == (byte)0xBB && bomCheck[2] == (byte)0xBF;
+		}
+		
+        JsonValue schemaJson;
+		try (BufferedInputStream inStream = new BufferedInputStream(ngValidator.schemaFile.getInputStream()))
+		{
+			if (includesBom)
+			{
+				long bytesSkipped = inStream.skip(3);
+				if (bytesSkipped != 3)
+					throw new IOException("Failed to read the JSON Schema file.");
+			}
+			schemaJson = new JsonParser(inStream).parse();
+		}
+		Schema schema = new SchemaLoader(schemaJson).load();
+        JsonValue instanceJson = new JsonParser(instanceStr).parse();
+        Validator validator = Validator.create(schema, new ValidatorConfig(FormatValidationPolicy.ALWAYS));
+        ValidationFailure failure = validator.validate(instanceJson);
+
+
+        StringBuilder errorBuilder = new StringBuilder();
+        // Use reflection to call the private method
+        Method method = NGTMDDJsonValidator.class.getDeclaredMethod("appendErrorPerCause", ValidationFailure.class, StringBuilder.class, int.class);
+        method.setAccessible(true);
+		for (ValidationFailure fail : failure.getCauses())
+		{
+			String pointer = fail.getSchema().getLocation().getPointer().toString();
+			if (pointer.startsWith("#/" + "CCTVImageLinkRequest") && (pointer.compareTo("#/" + "CCTVImageLinkRequest") == 0 || pointer.startsWith("#/" + "CCTVImageLinkRequest" + "/")))
+			{
+				errorBuilder.append(fail.getMessage().replace("instance", fail.getInstance().toString()));
+				method.invoke(ngValidator, fail, errorBuilder, 2);
+			}
+		}
+
+        String errorText = errorBuilder.toString();
+        assertThat(errorText).contains("required properties are missing: cctvId");
+        assertThat(errorText).contains("the \"suppressed\" is not equal to any enum values");
     }
 }
