@@ -159,22 +159,7 @@ public class StandardValidationController
 	private Path determineWorkingDirectory()
 		throws URISyntaxException
 	{
-		String jarPath = C2CMVTApplication.class.getProtectionDomain().getCodeSource().getLocation().toURI().toString();
-		if (jarPath.startsWith("jar:nested:/")) // check if the path needs to modified to be a valid file system path
-			jarPath = jarPath.substring("jar:nested:/".length());
-		if (jarPath.startsWith("file:/"))
-			jarPath = jarPath.substring("file:/".length());
-
-		Path dir = Path.of(jarPath);
-		if (dir.toString().contains("c2c-mvt.jar"))
-		{
-			while (dir.getFileName().toString().compareTo("c2c-mvt.jar") != 0)
-				dir = dir.getParent();
-		}
-
-		dir = dir.getParent();
-		dir = Path.of(dir.toString(), "c2c-mvt");
-		return dir;
+		return Path.of(System.getProperty("user.home"), "c2c-mvt");
 	}
 	
 	
