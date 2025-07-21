@@ -28,5 +28,7 @@ To start the application with a port 8082 open for debugging use the following c
 java -agentlib:jdwp=transport=dt_socket,address=8082,server=y,suspend=n -jar <path to repo>\c2c-mvt\target\c2c-mvt.jar
 ```
 
-
+## Release Executable
+In this release we also added a windows executable for users, simply download the execuatble and open it, then open a browser and go to localhost:3116,
+the MVT should be opened and ready
 
