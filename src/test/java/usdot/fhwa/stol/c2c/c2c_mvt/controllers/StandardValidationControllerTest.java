@@ -15,6 +15,7 @@
  */
 package usdot.fhwa.stol.c2c.c2c_mvt.controllers;
 
+import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
@@ -35,6 +36,8 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
+
+import usdot.fhwa.stol.c2c.c2c_mvt.C2CMVTException;
 
 /**
  * Unit tests for StandardValidationController
@@ -202,5 +205,71 @@ class StandardValidationControllerTest {
 				Assertions.fail("An Exception was thrown during validateMessage");
 		}
 		controller.deleteMessages();
+	}
+
+
+	@Test
+	void testValidateMessages_InvalidJsonSyntax() {
+		// Arrange
+		String jsonString =
+		"""
+		{
+			"message
+		}		
+		""";
+		byte[] messageBytes = jsonString.getBytes(StandardCharsets.UTF_8);
+		String fileExt = ".json";
+		String standard = "ngTMDD";
+		String version = "1.0";
+		String encoding = "UTF-8";
+		String selectedMessageType = "Auto Detect";
+
+		controller.validateMessages(messageBytes, fileExt, standard, version, encoding, selectedMessageType);
+		String errorRecord = null;
+		for (String record : StandardValidationController.getValidationRecords())
+		{
+			if (record.contains("Error occured in separateMessage()"))
+				errorRecord = record;
+		}
+		controller.deleteMessages();
+		assertThat(errorRecord).isNotNull();
+	}
+
+	@Test
+	void testValidateMessages_InvalidWorkingDirectory() {
+		// Arrange
+		String jsonString =
+		"""
+		{
+			"message
+		}		
+		""";
+		byte[] messageBytes = jsonString.getBytes(StandardCharsets.UTF_8);
+		String fileExt = ".json";
+		String standard = "ngTMDD";
+		String version = "1.0";
+		String encoding = "UTF-8";
+		String selectedMessageType = "Auto Detect";
+		try
+		{
+			Field field = StandardValidationController.class.getDeclaredField("workingDirectory");
+			field.setAccessible(true);
+			String oldWorkingDir = (String)field.get(controller);
+			field.set(controller, "/invalidpath<>:\"/|?*.txt");
+			controller.validateMessages(messageBytes, fileExt, standard, version, encoding, selectedMessageType);
+			field.set(controller, oldWorkingDir);
+			String errorRecord = null;
+			for (String record : StandardValidationController.getValidationRecords())
+			{
+				if (record.contains("Failed to save message to disk for message"))
+					errorRecord = record;
+			}
+			controller.deleteMessages();
+			assertThat(errorRecord).isNotNull();
+		}
+		catch (NoSuchFieldException | IllegalAccessException ex)
+		{
+			Assertions.fail();
+		}
 	}
 }
