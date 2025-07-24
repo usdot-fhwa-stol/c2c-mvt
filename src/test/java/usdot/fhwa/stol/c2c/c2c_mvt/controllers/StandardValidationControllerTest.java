@@ -226,17 +226,17 @@ class StandardValidationControllerTest {
 
 		controller.validateMessages(messageBytes, fileExt, standard, version, encoding, selectedMessageType);
 		String errorRecord = null;
-		for (String record : StandardValidationController.getValidationRecords())
+		for (String validationRecord : StandardValidationController.getValidationRecords())
 		{
-			if (record.contains("Error occured in separateMessage()"))
-				errorRecord = record;
+			if (validationRecord.contains("Error occured in separateMessage()"))
+				errorRecord = validationRecord;
 		}
 		controller.deleteMessages();
 		assertThat(errorRecord).isNotNull();
 	}
 
 	@Test
-	void testValidateMessages_InvalidWorkingDirectory() {
+	void testValidateMessages_InvalidJsonAndInvalidWorkingDirectory() {
 		// Arrange
 		String jsonString =
 		"""
@@ -259,10 +259,54 @@ class StandardValidationControllerTest {
 			controller.validateMessages(messageBytes, fileExt, standard, version, encoding, selectedMessageType);
 			field.set(controller, oldWorkingDir);
 			String errorRecord = null;
-			for (String record : StandardValidationController.getValidationRecords())
+			for (String validationRecord : StandardValidationController.getValidationRecords())
 			{
-				if (record.contains("Failed to save message to disk for message"))
-					errorRecord = record;
+				if (validationRecord.contains("Failed to save message to disk for message"))
+					errorRecord = validationRecord;
+			}
+			controller.deleteMessages();
+			assertThat(errorRecord).isNotNull();
+		}
+		catch (NoSuchFieldException | IllegalAccessException ex)
+		{
+			Assertions.fail();
+		}
+	}
+
+	@Test
+	void testValidateMessages_ValidJsonAndInvalidWorkingDirectory() {
+		// Arrange
+		String jsonString =
+		"""
+		{
+			"message":
+			{
+				"messageType": "ActivityLogRequest",
+				"ownerOrganizationId": "org_id",
+				"externalOrganizationId": "ext_org_id",
+				"requestId": "request_id"
+			}
+		}			
+		""";
+		byte[] messageBytes = jsonString.getBytes(StandardCharsets.UTF_8);
+		String fileExt = ".json";
+		String standard = "ngTMDD";
+		String version = "1.0";
+		String encoding = "UTF-8";
+		String selectedMessageType = "Auto Detect";
+		try
+		{
+			Field field = StandardValidationController.class.getDeclaredField("workingDirectory");
+			field.setAccessible(true);
+			String oldWorkingDir = (String)field.get(controller);
+			field.set(controller, "/invalidpath<>:\"/|?*.txt");
+			controller.validateMessages(messageBytes, fileExt, standard, version, encoding, selectedMessageType);
+			field.set(controller, oldWorkingDir);
+			String errorRecord = null;
+			for (String validationRecord : StandardValidationController.getValidationRecords())
+			{
+				if (validationRecord.contains("Failed to save message to disk for message"))
+					errorRecord = validationRecord;
 			}
 			controller.deleteMessages();
 			assertThat(errorRecord).isNotNull();
