@@ -1,5 +1,8 @@
 # Center-To-Center Message Validation Tool
 The Center-To-Center Message Validation Tool (C2C-MVT) is an application used to test whether or not messages defined by a C2C Standard conform to the data format specified by the standard. The intent is to use common interfaces and methods to be able to validate messages for many C2C Standards. The first standard being implemented is the Next Generation Traffic Management Data Dictionary (ngTMDD).
+| CI Build Status | Sonar Code Quality |
+|----------------------|---------------------|
+|[![CI](https://github.com/usdot-fhwa-stol/c2c-mvt/actions/workflows/ci.yml/badge.svg)](https://github.com/usdot-fhwa-stol/c2c-mvt/actions/workflows/ci.yml) | [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=usdot-fhwa-stol_c2c-mvt&metric=alert_status)](https://sonarcloud.io/dashboard?id=usdot-fhwa-stol_c2c-mvt) |
 
 ## Minimum Hardware Requirements
 2 GB of memory
