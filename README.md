@@ -10,7 +10,7 @@ Windows 10 or higher | Ubuntu Linux 20.04 LTS or higher | Red Hat Enterprise Lin
 Clone the repository and create a Maven project using your IDE of choice. The embedded webserver runs on port 3116 by default. To change this port edit the server.port properties in the c2c-mvt\src\resources\application.properties file.
 
 ## User Instructions
-In this release we added a windows executable for users, simply download the execuatble and open it, then open a browser and go to localhost:3116,
+In this release we added a windows executable for users, simply download the execuatble from here (https://github.com/usdot-fhwa-stol/c2c-mvt/releases) and open it, then open a browser and go to localhost:3116,
 the MVT should be opened and ready.
 
 ## Build/Test
