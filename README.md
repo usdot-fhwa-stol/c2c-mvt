@@ -12,6 +12,9 @@ Windows 10 or higher | Ubuntu Linux 20.04 LTS or higher | Red Hat Enterprise Lin
 ## Developer Instructions
 Clone the repository and create a Maven project using your IDE of choice. The embedded webserver runs on port 3116 by default. To change this port edit the server.port properties in the c2c-mvt\src\resources\application.properties file.
 
+## Release Notes
+The current version of the Center-To-Center Message Validation Tool: [C2C-MVT Release Notes](<docs/Releasenotes.md>)
+
 ## Build/Test
 Use the Maven Command "install" or your IDE's built in Maven capabilities to initiate the build and test process. 
 ```
