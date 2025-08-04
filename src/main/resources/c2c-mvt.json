@@ -1,0 +1,17 @@
+{
+	"ngTMDD":
+	{
+		"versions":
+		{
+			"1.0" :
+			{
+				"encodings": ["UTF-8"],
+				"messageTypes": [],
+				"decoder": "JsonDecoder",
+				"parser": "NGTMDDJsonParser",
+				"validator": "NGTMDDJsonValidator",
+				"schema": "ngTMDD/ngTMDD_Schema_v1.0.json"
+			}
+		}
+	}
+}
