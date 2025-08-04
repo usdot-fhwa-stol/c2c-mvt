@@ -27,6 +27,7 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -139,7 +140,7 @@ public class StandardValidationController
 			Files.createDirectories(Path.of(workingDirectory, FILE_DIR));
 			LOGGER.info("Working directory set to " + workingDirectory);
 		}
-		catch (URISyntaxException | IOException ex)
+		catch (IOException ex)
 		{
 			logException(LOGGER, ex, "Failed to set a working directory", null);
 		}
@@ -157,24 +158,8 @@ public class StandardValidationController
 	
 	
 	private Path determineWorkingDirectory()
-		throws URISyntaxException
 	{
-		String jarPath = C2CMVTApplication.class.getProtectionDomain().getCodeSource().getLocation().toURI().toString();
-		if (jarPath.startsWith("jar:nested:/")) // check if the path needs to modified to be a valid file system path
-			jarPath = jarPath.substring("jar:nested:/".length());
-		if (jarPath.startsWith("file:/"))
-			jarPath = jarPath.substring("file:/".length());
-
-		Path dir = Path.of(jarPath);
-		if (dir.toString().contains("c2c-mvt.jar"))
-		{
-			while (dir.getFileName().toString().compareTo("c2c-mvt.jar") != 0)
-				dir = dir.getParent();
-		}
-
-		dir = dir.getParent();
-		dir = Path.of(dir.toString(), "c2c-mvt");
-		return dir;
+		return Path.of(System.getProperty("user.home"), "c2c-mvt");
 	}
 	
 	
@@ -515,7 +500,8 @@ public class StandardValidationController
 			decoder.setEncoding(encoding);
 			if (!decoder.checkSecurity(messageBytes))
 				throw new C2CMVTException(new Exception("Found possible security threat. Did not attempt validation."), null);
-			ArrayList<byte[]> separatedMessages = decoder.separateMessages(messageBytes);
+			ArrayList<byte[]> separatedMessages = trySeparateMessage(decoder, messageBytes, fileExt);
+			
 			int msgTotal = separatedMessages.size();
 			int msgNum = 1;
 			for (byte[] msgBytes : separatedMessages)
@@ -524,12 +510,12 @@ public class StandardValidationController
 				{
 					UUID uuid = UUID.randomUUID();
 					uuidAsString = uuid.toString();
-					String filename = uuid.toString() + fileExt;
+					String filename = uuidAsString + fileExt;
 					try (BufferedOutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(Path.of(workingDirectory, FILE_DIR, filename))))
 					{
 						outputStream.write(msgBytes);
 					}
-					catch (IOException ex)
+					catch (IOException | InvalidPathException ex)
 					{
 						throw new C2CMVTException(ex, String.format("Failed to save message to disk for message %d of %d", msgNum, msgTotal));
 					}
@@ -563,6 +549,30 @@ public class StandardValidationController
 		finally
 		{
 			validationInProgress.set(false);
+		}
+	}
+
+
+	private ArrayList<byte[]> trySeparateMessage(Decoder<C2CBaseMessage> decoder, byte[] messageBytes, String fileExt)
+		throws C2CMVTException
+	{
+		try
+		{
+			return decoder.separateMessages(messageBytes);
+		}
+		catch (C2CMVTException separateMessagesError)
+		{
+			String uuidAsString = UUID.randomUUID().toString();
+			try (BufferedOutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(Path.of(workingDirectory, FILE_DIR, uuidAsString + fileExt))))
+			{
+				outputStream.write(messageBytes);
+			}
+			catch (IOException | InvalidPathException ioEx)
+			{
+				addLogRecord("Failed to save message to disk for message", uuidAsString);
+				logException(LOGGER, ioEx, null, uuidAsString);
+			}
+			throw separateMessagesError;
 		}
 	}
 

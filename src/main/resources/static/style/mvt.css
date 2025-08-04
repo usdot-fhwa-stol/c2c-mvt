@@ -21,6 +21,26 @@ body
 	text-align: center;
 }
 
+
+.grid-header
+{
+	display: grid;
+	grid-template-columns: 1fr 1fr 1fr;
+	align-items: center;
+}
+
+#user-guide-icon
+{
+	width:32px;
+}
+
+.user-guide-anchor
+{
+	float:right;
+}
+
+
+
 .container 
 {
 	flex: 1;
